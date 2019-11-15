@@ -4,41 +4,27 @@ set(RINGBUFFER_HEADERS
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/cuda.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/trace.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/affinity.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/ring_realloc_lock.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/ring_state.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/guarantee.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/util.h"
 
-
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/cuda/stream.hpp"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/array.h"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/Common.hpp"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/Complex.hpp"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/cuda.h"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/proclog.h"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/ring.h"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/Ring.hpp"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/unpack.h"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/array_utils.hpp"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/assert.hpp"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/cuda.hpp"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/cuda.hpp"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/proclog.hpp"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/utils.hpp"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/ring.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/sequence.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/span.h"
         )
 
 set(RINGBUFFER_SOURCES
-        common.cpp
-        detail/memory.cpp
-        detail/cuda.cpp
-        detail/trace.cpp
-        detail/affinity.cpp
-
-#        array.cpp
-#        gunpack.cu
-#        gunpack.cuh
-#        IndexArray.cuh
-#        proclog.cpp
-#        ring.cpp
-#        ring_impl.cpp
-#        ring_impl.hpp
-#        unpack.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/common.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/detail/memory.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/detail/cuda.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/detail/trace.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/detail/affinity.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/detail/ring_realloc_lock.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/detail/guarantee.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/ring.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/sequence.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/span.cpp
         )
 
 add_library(ringbuffer ${RINGBUFFER_SOURCES} ${RINGBUFFER_HEADERS})
