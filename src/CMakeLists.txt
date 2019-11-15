@@ -3,10 +3,10 @@ set(RINGBUFFER_HEADERS
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/memory.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/cuda.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/trace.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/affinity.h"
 
 
 #        "${PROJECT_SOURCE_DIR}/include/ringbuffer/cuda/stream.hpp"
-#        "${PROJECT_SOURCE_DIR}/include/ringbuffer/affinity.h"
 #        "${PROJECT_SOURCE_DIR}/include/ringbuffer/array.h"
 #        "${PROJECT_SOURCE_DIR}/include/ringbuffer/Common.hpp"
 #        "${PROJECT_SOURCE_DIR}/include/ringbuffer/Complex.hpp"
@@ -28,8 +28,8 @@ set(RINGBUFFER_SOURCES
         detail/memory.cpp
         detail/cuda.cpp
         detail/trace.cpp
+        detail/affinity.cpp
 
-#        affinity.cpp
 #        array.cpp
 #        gunpack.cu
 #        gunpack.cuh

@@ -136,9 +136,9 @@ namespace ringbuffer {
         }
 
 
-/*
- * CUDAKernel implementation
- */
+        /*
+         * CUDAKernel implementation
+         */
 
         void CUDAKernel::cuda_safe_call(CUresult res) {
             if( res != CUDA_SUCCESS ) {
@@ -219,6 +219,106 @@ namespace ringbuffer {
                                   block.x, block.y, block.z,
                                   smem, stream,
                                   &arg_ptrs[0], NULL);
+        }
+
+
+        /*
+         * RAII wrapper for CUDA Streams
+         */
+
+        void stream::destroy() {
+            if (_obj) {
+                cudaStreamDestroy(_obj);
+                _obj = 0;
+            }
+        }
+
+#if __cplusplus >= 201103L
+        stream::stream(cuda::stream &&other) noexcept : _obj(0) { this->swap(other); }
+#endif
+
+        stream::stream(int priority, unsigned flags) : _obj(0) {
+            if (priority > 0) {
+                int least_priority;
+                int greatest_priority;
+                cudaDeviceGetStreamPriorityRange(&least_priority, &greatest_priority);
+                RB_CHECK_CUDA_EXCEPTION(cudaStreamCreateWithPriority(&_obj, flags, greatest_priority),
+                                        RBStatus::STATUS_DEVICE_ERROR);
+            } else {
+                RB_CHECK_CUDA_EXCEPTION(cudaStreamCreateWithFlags(&_obj, flags), RBStatus::STATUS_DEVICE_ERROR);
+            }
+        }
+
+        stream::~stream() { this->destroy(); }
+
+        void stream::swap(cuda::stream &other) { std::swap(_obj, other._obj); }
+
+        int stream::priority() const {
+            int val;
+            RB_CHECK_CUDA_EXCEPTION(cudaStreamGetPriority(_obj, &val), RBStatus::STATUS_DEVICE_ERROR);
+            return val;
+        }
+
+        unsigned stream::flags() const {
+            unsigned val;
+            RB_CHECK_CUDA_EXCEPTION(cudaStreamGetFlags(_obj, &val), RBStatus::STATUS_DEVICE_ERROR);
+            return val;
+        }
+
+        bool stream::query() const {
+            cudaError_t ret = cudaStreamQuery(_obj);
+            if (ret == cudaErrorNotReady) {
+                return false;
+            } else {
+                RB_CHECK_CUDA_EXCEPTION(ret, RBStatus::STATUS_DEVICE_ERROR);
+                return true;
+            }
+        }
+
+        void stream::synchronize() const {
+            cudaStreamSynchronize(_obj);
+            RB_CHECK_CUDA_EXCEPTION(cudaGetLastError(), RBStatus::STATUS_DEVICE_ERROR);
+        }
+
+        void stream::wait(cudaEvent_t event, unsigned flags) const {
+            RB_CHECK_CUDA_EXCEPTION(cudaStreamWaitEvent(_obj, event, flags), RBStatus::STATUS_DEVICE_ERROR);
+        }
+
+        void stream::addCallback(cudaStreamCallback_t callback, void *userData, unsigned flags) {
+            RB_CHECK_CUDA_EXCEPTION(cudaStreamAddCallback(_obj, callback, userData, flags),
+                                    RBStatus::STATUS_DEVICE_ERROR);
+        }
+
+        void stream::attachMemAsync(void *devPtr, size_t length, unsigned flags) {
+            RB_CHECK_CUDA_EXCEPTION(cudaStreamAttachMemAsync(_obj, devPtr, length, flags),
+                                    RBStatus::STATUS_DEVICE_ERROR);
+        }
+
+        // This version automatically calls synchronize() before destruction
+        scoped_stream::scoped_stream(int priority, unsigned flags)
+                : super_type(priority, flags) {}
+
+        scoped_stream::~scoped_stream() { this->synchronize(); }
+
+
+        // This version automatically syncs with a parent stream on construct/destruct
+        void child_stream::sync_streams(cudaStream_t dependent, cudaStream_t dependee) {
+            // Record event in dependee and make dependent wait for it
+            cudaEvent_t event;
+            RB_CHECK_CUDA_EXCEPTION(cudaEventCreateWithFlags(&event, cudaEventDisableTiming),
+                                    RBStatus::STATUS_DEVICE_ERROR);
+            RB_CHECK_CUDA_EXCEPTION(cudaEventRecord(event, dependee), RBStatus::STATUS_DEVICE_ERROR);
+            RB_CHECK_CUDA_EXCEPTION(cudaStreamWaitEvent(dependent, event, 0), RBStatus::STATUS_DEVICE_ERROR);
+            RB_CHECK_CUDA_EXCEPTION(cudaEventDestroy(event), RBStatus::STATUS_DEVICE_ERROR);
+        }
+
+        child_stream::child_stream(cudaStream_t parent, int priority, unsigned flags)
+                : super_type(priority, flags), _parent(parent) {
+            sync_streams(this->_obj, _parent);
+        }
+
+        child_stream::~child_stream() {
+            sync_streams(_parent, this->_obj);
         }
 
 #endif // WITH_CUDA

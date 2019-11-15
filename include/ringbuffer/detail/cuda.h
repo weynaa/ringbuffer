@@ -132,6 +132,10 @@ namespace ringbuffer {
 
         int get_cuda_device_cc();
 
+        /*
+         * Helper class for JIT CUDA Kernels
+         */
+
         class CUDAKernel {
             CUmodule                  _module;
             CUfunction                _kernel;
@@ -188,15 +192,77 @@ namespace ringbuffer {
 
         };
 
+        /*
+         * RAII Wrapper for CUDA Stream
+         */
+
+        class stream {
+            void destroy();
+        protected:
+            cudaStream_t _obj;
+        public:
+            // Not copy-assignable
+#if __cplusplus >= 201103L
+            stream(const cuda::stream& other) = delete;
+            stream& operator=(const cuda::stream& other) = delete;
+
+            // Move semantics
+            stream(cuda::stream&& other) noexcept;
+            cuda::stream& operator=(cuda::stream&& other) noexcept {
+                this->destroy();
+                this->swap(other);
+                return *this;
+            }
+#else
+            stream(const cuda::stream& other);
+            stream& operator=(const cuda::stream& other);
+#endif
+
+            explicit stream(int priority=0, unsigned flags=cudaStreamDefault);
+
+            ~stream();
+            void swap(cuda::stream& other);
+            int priority() const;
+            unsigned flags() const;
+            bool query() const;
+            void synchronize() const;
+            void wait(cudaEvent_t event, unsigned flags=0) const;
+            void addCallback(cudaStreamCallback_t callback,
+                             void* userData=0, unsigned flags=0);
+            void attachMemAsync(void* devPtr, size_t length, unsigned flags);
+
+            explicit operator const cudaStream_t&() const { return _obj; }
+        };
+
+
+        // This version automatically calls synchronize() before destruction
+        class scoped_stream : public cuda::stream {
+            typedef cuda::stream super_type;
+        public:
+            explicit scoped_stream(int priority=0, unsigned flags=cudaStreamNonBlocking);
+            ~scoped_stream();
+        };
+
+        // This version automatically syncs with a parent stream on construct/destruct
+        class child_stream : public cuda::stream {
+            typedef cuda::stream super_type;
+            cudaStream_t _parent;
+            void sync_streams(cudaStream_t dependent, cudaStream_t dependee);
+        public:
+            explicit child_stream(cudaStream_t parent,
+                                  int          priority=0,
+                                  unsigned     flags=cudaStreamNonBlocking);
+            ~child_stream();
+        };
 
 #else // WITH_CUDA
-    #define __host__
+        #define __host__
     #define __device__
 #endif // WITH_CUDA
 
 
-    }
-}
+    } // namespace cuda
+} // namespace ringbuffer
 
 
 #endif //RINGBUFFER_CUDA_H
