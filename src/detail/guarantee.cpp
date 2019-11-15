@@ -75,7 +75,7 @@ namespace ringbuffer {
         std::size_t Guarantee::offset() const { return m_offset; }
 
         std::unique_ptr<Guarantee> new_guarantee(Ring* ring) {
-            // TODO: Use std::make_unique here (requires C++14)
+            // @todo: Use std::make_unique here (requires C++14)
             return std::unique_ptr<Guarantee>(new Guarantee(ring));
         }
 

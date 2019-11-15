@@ -59,7 +59,7 @@ namespace ringbuffer {
         void*           data() const override;
         // Note: This is the offset relative to the beginning of the ring,
         //         as wspans aren't firmly associated with a sequence.
-        // TODO: This is likely to be confusing compared to ReadSpan::offset
+        // @todo: This is likely to be confusing compared to ReadSpan::offset
         //         Can't easily change the name though because it's a shared API
         std::size_t     offset() const override;
     };

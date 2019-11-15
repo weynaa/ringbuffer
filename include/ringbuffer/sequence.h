@@ -112,7 +112,7 @@ namespace ringbuffer {
     class ReadSequence : public SequenceWrapper {
         std::unique_ptr<state::Guarantee> _guarantee;
     public:
-        // TODO: See if can make these function bodies a bit more concise
+        // @todo: See if can make these function bodies a bit more concise
         static ReadSequence earliest_or_latest(Ring* ring, bool with_guarantee, bool latest);
         static ReadSequence by_name(Ring* ring, const std::string& name, bool with_guarantee);
         static ReadSequence at(Ring* ring, time_tag_type time_tag, bool with_guarantee);
@@ -123,7 +123,7 @@ namespace ringbuffer {
         inline std::unique_ptr<state::Guarantee>&       guarantee()       { return _guarantee; }
         inline std::unique_ptr<state::Guarantee> const& guarantee() const { return _guarantee; }
         /*
-          // TODO: This is needed for rfRingSequenceOpenSame, but it's not clear
+          // @todo: This is needed for rfRingSequenceOpenSame, but it's not clear
           //         that that API is really needed. Also need to delete
           //         assignment and move constructors if this is implemented.
         // Copy constructor points to same underlying RFsequence_impl object, but

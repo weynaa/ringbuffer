@@ -122,7 +122,7 @@ namespace ringbuffer {
         RBStatus affinitySetOpenMPCores(std::size_t nthread, const int* thread_cores) {
 #ifdef WITH_OMP
             int host_core = -1;
-            // TODO: Check these for errors
+            // @todo: Check these for errors
             affinityGetCore(&host_core);
             affinitySetCore(-1); // Unbind host core to unconstrain OpenMP threads
             omp_set_num_threads(nthread);

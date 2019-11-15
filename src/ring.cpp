@@ -605,7 +605,7 @@ namespace ringbuffer {
         std::size_t requested_begin = sequence->begin() + offset;
         std::size_t requested_end   = requested_begin + *size_;
 
-        // TODO: If this function fails, should the guarantee be left where it was?
+        // @todo: If this function fails, should the guarantee be left where it was?
         //         This would be straightforward to implement using a scoped
         //           guarantee.
 
@@ -686,7 +686,7 @@ namespace ringbuffer {
         state::unique_lock_type lock(state.mutex);
         _ghost_write(begin, commit_size);
 
-        // TODO: Refactor/tidy this function a bit
+        // @todo: Refactor/tidy this function a bit
 
         // Note: This allows unused open blocks to be 'cancelled' if they
         //         are closed in reverse order.
@@ -720,7 +720,7 @@ namespace ringbuffer {
         else if( commit_size < reserve_size ) {
             // There are reservations in front of this one, so we
             //   are not allowed to commit less than size.
-            // TODO: How to deal with error here?
+            // @todo: How to deal with error here?
             //std::cout << "BFRING ERROR: Must commit whole wspan when other spans are reserved" << std::endl;
             //return;
             RB_ASSERT_EXCEPTION(false, RBStatus::STATUS_INVALID_STATE);

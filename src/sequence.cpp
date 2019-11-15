@@ -67,7 +67,7 @@ namespace ringbuffer {
     }
 
 
-    // TODO: See if can make these function bodies a bit more concise
+    // @todo: See if can make these function bodies a bit more concise
     ReadSequence ReadSequence::earliest_or_latest(Ring* ring, bool with_guarantee, bool latest) {
         std::unique_ptr<state::Guarantee> guarantee;
         SequencePtr sequence = ring->open_earliest_or_latest_sequence(with_guarantee, guarantee, latest);

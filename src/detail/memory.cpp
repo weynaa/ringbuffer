@@ -61,7 +61,7 @@ namespace ringbuffer {
             RB_ASSERT(ret == cudaSuccess || ret == cudaErrorInvalidValue,
                       RBStatus::STATUS_DEVICE_ERROR);
             if( ret == cudaErrorInvalidValue ) {
-                // TODO: Is there a better way to find out how a pointer was allocated?
+                // @todo: Is there a better way to find out how a pointer was allocated?
                 //         Alternatively, is there a way to prevent this from showing
                 //           up in cuda-memcheck?
                 // Note: cudaPointerGetAttributes only works for memory allocated with
