@@ -1,0 +1,163 @@
+//
+// Created by netlabs on 11/14/19.
+//
+
+#ifndef RINGBUFFER_CUDA_H
+#define RINGBUFFER_CUDA_H
+
+#include "ringbuffer/common.h"
+#include <vector>
+#include <stdexcept>
+#include <map>
+#include <type_traits>
+
+
+#ifdef WITH_CUDA
+#include <cuda_runtime_api.h>
+#include <cuda.h>
+
+namespace ringbuffer {
+    namespace cuda {
+
+        extern thread_local cudaStream_t g_cuda_stream;
+
+#if THRUST_VERSION >= 100800 // WAR for old Thrust version (e.g., on TK1)
+        // @todo: Also need thrust::cuda::par(allocator).on(stream)
+    #define thrust_cuda_par_on(stream) thrust::cuda::par.on(stream)
+#else
+// @todo: Also need thrust::cuda::par(allocator, stream)
+#define thrust_cuda_par_on(stream) thrust::cuda::par(stream)
+#endif
+
+#define RB_CHECK_CUDA_EXCEPTION(call, err) \
+	do { \
+		cudaError_t cuda_ret = call; \
+		if( cuda_ret != cudaSuccess ) { \
+			RB_DEBUG_PRINT(cudaGetErrorString(cuda_ret)); \
+		} \
+		RB_ASSERT_EXCEPTION(cuda_ret == cudaSuccess, err); \
+	} while(0)
+
+#define RB_CHECK_CUDA(call, err) \
+	do { \
+		cudaError_t cuda_ret = call; \
+		if( cuda_ret != cudaSuccess ) { \
+			RB_DEBUG_PRINT(cudaGetErrorString(cuda_ret)); \
+		} \
+		RB_ASSERT(cuda_ret == cudaSuccess, err); \
+	} while(0)
+
+#endif // WITH_CUDA
+
+        /*
+         * get CUDA stream that is associated with this thread
+         */
+        RBStatus streamGet(void*       stream);
+
+        /*
+         * associate CUDA stream with this thread
+         */
+        RBStatus streamSet(void const* stream);
+
+        /*
+         * synchronize CUDA stream (blocking call)
+         */
+        RBStatus streamSynchronize();
+
+        /*
+         * get CUDA Device
+         */
+        RBStatus deviceGet(int* device);
+
+        /*
+         * set CUDA Device
+         */
+        RBStatus deviceSet(int  device);
+
+        /*
+         * set CUDA Device by PCI Bus ID
+         */
+        RBStatus deviceSetById(const std::string& pci_bus_id);
+
+        /*
+         * Set CUDA Device option to avoid yielding while setting the device (increases latency)
+         * Note: This must be called _before_ initializing any devices in the current process
+         */
+        RBStatus devicesSetNoSpinCPU();
+
+        /*
+         * Section blow is only enabled if ringbuffer is compiled with CUDA
+         */
+
+#ifdef WITH_CUDA
+
+        int get_cuda_device_cc();
+
+        class CUDAKernel {
+            CUmodule                  _module;
+            CUfunction                _kernel;
+            std::string               _func_name;
+            std::string               _ptx;
+            std::vector<CUjit_option> _opts;
+
+            void cuda_safe_call(CUresult res);
+
+            void create_module(void** optvals = nullptr);
+
+            void destroy_module();
+
+        public:
+            CUDAKernel();
+            CUDAKernel(const CUDAKernel& other);
+
+            CUDAKernel(const char*   func_name,
+                       const char*   ptx,
+                       unsigned int  nopts = 0,
+                       CUjit_option* opts = nullptr,
+                       void**        optvals = nullptr);
+
+            CUDAKernel& set(const char*   func_name,
+                            const char*   ptx,
+                            unsigned int  nopts = 0,
+                            CUjit_option* opts = nullptr,
+                            void**        optvals = nullptr);
+
+            ~CUDAKernel();
+
+            void swap(CUDAKernel& other);
+
+            inline explicit operator CUfunction() const { return _kernel; }
+
+            inline CUDAKernel& operator=(const CUDAKernel& other) {
+                CUDAKernel tmp(other);
+                this->swap(tmp);
+                return *this;
+            }
+
+            CUresult launch(dim3 grid, dim3 block,
+                            unsigned int smem, CUstream stream,
+                            std::vector<void*> arg_ptrs);
+
+#if __cplusplus >= 201103L
+            template<typename... Args>
+            inline CUresult launch(dim3 grid, dim3 block,
+                                   unsigned int smem, CUstream stream,
+                                   Args... args) {
+                return this->launch(grid, block, smem, stream, {(void*)&args...});
+            }
+#endif
+
+        };
+
+
+#else // WITH_CUDA
+    #define __host__
+    #define __device__
+#endif // WITH_CUDA
+
+
+    }
+}
+
+
+#endif //RINGBUFFER_CUDA_H

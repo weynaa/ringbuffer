@@ -1,0 +1,89 @@
+//
+// Created by netlabs on 11/15/19.
+//
+
+#ifndef RINGBUFFER_TRACE_H
+#define RINGBUFFER_TRACE_H
+
+#include "ringbuffer/detail/cuda.h"
+
+#include <map>
+#include <queue>
+#include <string>
+#include <cstring>
+
+#ifdef WITH_CUDA
+#include <nvToolsExt.h>
+#endif //WITH_CUDA
+
+namespace ringbuffer {
+    namespace trace {
+#if RINGBUFFER_TRACE
+        // Note: __PRETTY_FUNCTION__ is GCC-specific
+//       __FUNCSIG__ is the equivalent in MSVC
+#define RB_TRACE()                         ringbuffer::trace::ScopedTracer _rb_tracer(__PRETTY_FUNCTION__)
+#define RB_TRACE_NAME(name)                ringbuffer::trace::ScopedTracer _rb_tracer(name)
+#define RB_TRACE_STREAM(stream)            ringbuffer::trace::ScopedTracer _rb_stream_tracer(__PRETTY_FUNCTION__, stream)
+#define RB_TRACE_NAME_STREAM(name, stream) ringbuffer::trace::ScopedTracer _rb_stream_tracer(name, stream)
+#else // not RINGBUFFER_TRACE
+#define RB_TRACE()
+#define RB_TRACE_NAME(name)
+#define RB_TRACE_STREAM(stream)
+#define RB_TRACE_NAME_STREAM(name, stream)
+#endif // RINGBUFFER_TRACE
+
+        namespace profile_detail {
+            inline unsigned simple_hash(const char* c);
+            inline uint32_t get_color(unsigned hash);
+        } // namespace profile_detail
+
+#ifdef WITH_CUDA
+
+        namespace nvtx {
+
+            class AsyncTracer {
+                cudaStream_t          _stream;
+                nvtxRangeId_t         _id;
+                std::string           _msg;
+                nvtxEventAttributes_t _attrs;
+                static void range_start_callback(cudaStream_t stream, cudaError_t status, void* userData);
+                static void range_end_callback(cudaStream_t stream, cudaError_t status, void* userData);
+            public:
+                explicit AsyncTracer(cudaStream_t stream);
+                void start(const char* msg, uint32_t color, uint32_t category);
+                void end();
+            };
+
+            typedef std::map<cudaStream_t,std::queue<AsyncTracer*> > TracerStreamMap;
+            extern thread_local TracerStreamMap g_nvtx_streams;
+
+        } // namespace nvtx
+
+#endif // WITH_CUDA
+
+        class ScopedTracer {
+            std::string _name;
+            uint32_t _color;
+            uint32_t _category;
+#ifdef WITH_CUDA
+            cudaStream_t _stream;
+            void build_attrs(nvtxEventAttributes_t *attrs);
+#endif
+        public:
+            // Not copy-assignable
+            ScopedTracer(ScopedTracer const &) = delete;
+            ScopedTracer &operator=(ScopedTracer const &) = delete;
+
+            ~ScopedTracer();
+
+#ifdef WITH_CUDA
+            explicit ScopedTracer(const std::string& name, cudaStream_t stream = nullptr);
+#else
+            inline explicit ScopedTracer(std::string name) : _name(std::move(name)) {}
+            inline ~ScopedTracer() {}
+#endif
+        };
+    }
+}
+
+#endif //RINGBUFFER_TRACE_H
