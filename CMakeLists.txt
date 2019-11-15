@@ -16,6 +16,7 @@ option(BUILD_SHARED_LIBS "Build shared library" ON)
 option(WITH_CUDA "With CUDA Integration" OFF)
 option(WITH_OMP "With OMP Integration" OFF)
 option(WITH_NUMA "With NUMA Integration" OFF)
+option(ENABLE_FIBERS "Enable Boost Fibers Support" OFF)
 option(ENABLE_DEBUG "Enable Debug Output" OFF)
 option(ENABLE_TRACE "Enable Tracing" OFF)
 

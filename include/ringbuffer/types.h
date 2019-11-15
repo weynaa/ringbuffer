@@ -10,6 +10,14 @@
 #include <mutex>
 #include <condition_variable>
 
+#ifdef RINGBUFFER_BOOST_FIBER
+#include <boost/fiber/all.hpp>
+#include <boost/fiber/mutex.hpp>
+#include <boost/thread/locks.hpp>
+#include <boost/thread/lock_guard.hpp>
+#include <boost/thread/lock_traits.hpp>
+#endif
+
 namespace ringbuffer {
 
     // Forward Declarations
@@ -42,12 +50,19 @@ namespace ringbuffer {
         class Guarantee;
 
         // type definitions
+#ifdef RINGBUFFER_BOOST_FIBER
+        typedef boost::fibers::mutex              mutex_type;
+        typedef boost::lock_guard<mutex_type>     lock_guard_type;
+        typedef std::unique_lock<mutex_type>      unique_lock_type;
+        typedef boost::fibers::condition_variable condition_type;
+        typedef RingReallocLock                   realloc_lock_type;
+#else
         typedef std::mutex                   mutex_type;
         typedef std::lock_guard<mutex_type>  lock_guard_type;
         typedef std::unique_lock<mutex_type> unique_lock_type;
         typedef std::condition_variable      condition_type;
         typedef RingReallocLock              realloc_lock_type;
-
+#endif
     }
 
 }

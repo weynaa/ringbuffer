@@ -70,4 +70,8 @@ if (ENABLE_TRACE)
     target_compile_definitions(ringbuffer PUBLIC RINGBUFFER_TRACE)
 endif()
 
+if(ENABLE_FIBERS)
+    target_compile_definitions(ringbuffer PUBLIC RINGBUFFER_BOOST_FIBER)
+endif()
+
 install(TARGETS ringbuffer DESTINATION ${CMAKE_INSTALL_LIBDIR})

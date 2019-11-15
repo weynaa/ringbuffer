@@ -50,7 +50,7 @@
 #include "ringbuffer/span.h"
 #include "ringbuffer/detail/guarantee.h"
 
-TEST(RingflowTestSuite, RingClass) {
+TEST(RingbufferTestSuite, RingClass) {
     using namespace ringbuffer;
 
     setDebugEnabled(true);
@@ -135,7 +135,7 @@ TEST(RingflowTestSuite, RingClass) {
 
 }
 
-TEST(RingflowTestSuite, RingClassMulti) {
+TEST(RingbufferTestSuite, RingClassMulti) {
     using namespace ringbuffer;
 
     setDebugEnabled(true);

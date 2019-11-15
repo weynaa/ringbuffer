@@ -57,7 +57,12 @@
 #include "ringbuffer/detail/affinity.h"
 #include "ringbuffer/detail/cuda.h"
 
-TEST(RingbufferTestSuite, RingbufferThreaded){
+#ifdef RINGBUFFER_BOOST_FIBER
+
+#include <boost/fiber/all.hpp>
+#include "FiberPool.hpp"
+
+TEST(RingbufferTestSuite, RingbufferFiber){
     using namespace ringbuffer;
     using namespace std::chrono;
 
@@ -111,9 +116,9 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
     std::size_t received_packages{0};
     uint64_t received_bytes{0};
 
-    auto recv_thread = std::thread([&](){
+    auto consumer = boost::fibers::fiber([&](){
         spdlog::info("start receiving thread");
-        
+
         // set numa affinity of receiver thread to 2
         affinity::affinitySetCore(2);
 
@@ -155,6 +160,8 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
                     received_packages++;
                     received_bytes += (data_header->height * data_header->width * sizeof(uint16_t));
 
+                    boost::this_fiber::yield();
+
                     read_seq.increment_to_next();
 
                     if (!is_running) {
@@ -180,10 +187,7 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
 
     });
 
-
-
-    // writer in main
-    {
+    auto producer = boost::fibers::fiber([&]() {
         spdlog::info("start writing to buffer");
 
         // set numa affinity of writer thread to 1
@@ -223,21 +227,35 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
                 //commit this span to memory
                 write_span.commit(nbytes);
             }
+
+            boost::this_fiber::yield();
+
         }
 
         ring.end_writing();
-    }
+    });
 
-    recv_thread.join();
+
+    consumer.join();
+    producer.join();
+
     spdlog::info("received packages: {0}", received_packages);
     spdlog::info("received bytes: {0}", received_bytes);
 
 }
-#ifdef WITH_CUDA
 
-TEST(RingbufferTestSuite, RingbufferThreadedCuda){
+
+TEST(RingbufferTestSuite, RingbufferFiberPool){
     using namespace ringbuffer;
     using namespace std::chrono;
+
+    // use only one thread
+    auto no_worker_threads{2u};
+
+    // any short queue
+    auto work_queue_size{4u};
+
+    FiberPool::FiberPool fiber_pool{no_worker_threads,work_queue_size};
 
     struct ImageHeader {
         ImageHeader() {}
@@ -247,47 +265,34 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
         // more metadata relevant to the image we're buffering
     };
 
-    Ring ring_input_cpu("depthcamera01_cpu", RBSpace::SPACE_SYSTEM);
+    std::string name = "depthcamera01";
+    RBSpace space = RBSpace::SPACE_SYSTEM;
+
+    Ring ring(name, space);
+    EXPECT_EQ(ring.name(), name);
+    EXPECT_EQ(ring.space(), space);
+
     // set numa affinity of data
-    ring_input_cpu.set_core(2);
-
-    Ring ring_input_gpu("depthcamera01_gpu", RBSpace::SPACE_CUDA);
-    // set numa affinity of data
-    ring_input_gpu.set_core(3);
-
-    Ring ring_output_gpu("result01_gpu", RBSpace::SPACE_CUDA);
-    // set numa affinity of data
-    ring_output_gpu.set_core(4);
-
-    Ring ring_output_cpu("result01_cpu", RBSpace::SPACE_SYSTEM);
-    // set numa affinity of data
-    ring_output_gpu.set_core(1);
-
-
+    ring.set_core(1);
 
     //Set our ring variables
     std::size_t niter = 1000;
 
     std::size_t nringlets = 1; //dimensionality of our ring.
-    std::size_t width = 2048;
-    std::size_t height = 1536;
+    std::size_t width = 1024;
+    std::size_t height = 1024;
     std::size_t npixels = width*height;
-    std::size_t nbytes = sizeof(uint32_t)*npixels; // one frame of depth-data
+    std::size_t nbytes = sizeof(uint16_t)*npixels; // one frame of depth-data
     std::size_t buffer_bytes = 4*nbytes; // 4x nbytes as ringbuffer size ==> could also be std::size_t(-1) to use default
 
     //resize ring to fit the data
-    ring_input_cpu.resize(nbytes, buffer_bytes, nringlets);
-    ring_input_gpu.resize(nbytes, buffer_bytes, nringlets);
-    ring_output_gpu.resize(nbytes, buffer_bytes, nringlets);
-    ring_output_cpu.resize(nbytes, buffer_bytes, nringlets);
+    ring.resize(nbytes, buffer_bytes, nringlets);
 
     std::size_t skip_offset = 0;
     std::size_t my_header_size = sizeof(ImageHeader);
-    bool nonblocking = false;
-    std::string seq_name;
 
 
-    auto create_frame = [](uint32_t* data_ptr, std::size_t w, std::size_t h){
+    auto create_frame = [](uint16_t* data_ptr, std::size_t w, std::size_t h){
 
         // write data
         for (std::size_t i=0; i<h; i++) {
@@ -302,153 +307,7 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
     std::size_t received_packages{0};
     uint64_t received_bytes{0};
 
-    auto cpu2gpu_thread = std::thread([&](){
-        spdlog::info("start cpu2gpu thread");
-        affinity::affinitySetCore(2);
-
-        ring_input_gpu.begin_writing();
-
-        bool try_again = true;
-        while (try_again) {
-            try {
-                auto read_seq = ReadSequence::earliest_or_latest(&ring_input_cpu, true, false);
-                try_again = false;
-
-                for (std::size_t n=0; n < niter; n++) {
-                    ReadSpan read_span(&read_seq, skip_offset, nbytes);
-                    void* data_read = read_span.data();
-                    {
-                        WriteSequence write_seq(&ring_input_gpu, seq_name, n, read_seq.header_size(), read_seq.header(), read_seq.nringlet(), skip_offset);
-                        WriteSpan write_span(&ring_input_gpu, nbytes, nonblocking);
-                        void *data_access = write_span.data();
-                        memory::memcpy_(data_access, ring_input_gpu.space(), data_read, ring_input_cpu.space(), nbytes);
-                        write_span.commit(nbytes);
-                        cuda::streamSynchronize();
-                    }
-                    read_seq.increment_to_next();
-
-                    if (!is_running) {
-                        spdlog::info("Exiting cpu2gpu thread (not running)");
-                        return;
-                    }
-                }
-            } catch(const RBException &e) {
-                if (e.status() == RBStatus::STATUS_END_OF_DATA) {
-                    if (try_again) {
-                        std::this_thread::yield();
-                    }
-                } else {
-                    spdlog::error("cpu2gpu RBException: {0}", e.what());
-                }
-            } catch(const std::runtime_error &e) {
-                spdlog::error("cpu2gpu std::runtime_error: {0}", e.what());
-            } catch(const std::exception &e) {
-                spdlog::error("cpu2gpu std::exception: {0}", e.what());
-            }
-        }
-        ring_input_gpu.end_writing();
-        spdlog::info("Exiting cpu2gpu thread (finished)");
-    });
-
-
-
-    auto gpu2gpu_thread = std::thread([&](){
-        spdlog::info("start gpu2gpu thread");
-        affinity::affinitySetCore(3);
-
-        ring_output_gpu.begin_writing();
-
-        bool try_again = true;
-        while (try_again) {
-            try {
-                auto read_seq = ReadSequence::earliest_or_latest(&ring_input_gpu, true, false);
-                try_again = false;
-
-                for (std::size_t n=0; n < niter; n++) {
-                    ReadSpan read_span(&read_seq, skip_offset, nbytes);
-                    void* data_read = read_span.data();
-                    {
-                        WriteSequence write_seq(&ring_output_gpu, seq_name, n, read_seq.header_size(), read_seq.header(), read_seq.nringlet(), skip_offset);
-                        WriteSpan write_span(&ring_output_gpu, nbytes, nonblocking);
-                        void *data_access = write_span.data();
-                        memory::memcpy_(data_access, ring_output_gpu.space(), data_read, ring_input_gpu.space(), nbytes);
-                        write_span.commit(nbytes);
-                        cuda::streamSynchronize();
-                    }
-                    read_seq.increment_to_next();
-
-                    if (!is_running) {
-                        spdlog::info("Exiting gpu2gpu thread (not running)");
-                        return;
-                    }
-                }
-            } catch(const RBException &e) {
-                if (e.status() == RBStatus::STATUS_END_OF_DATA) {
-                    if (try_again) {
-                        std::this_thread::yield();
-                    }
-                } else {
-                    spdlog::error("gpu2gpu RBException: {0}", e.what());
-                }
-            } catch(const std::runtime_error &e) {
-                spdlog::error("gpu2gpu std::runtime_error: {0}", e.what());
-            } catch(const std::exception &e) {
-                spdlog::error("gpu2gpu std::exception: {0}", e.what());
-            }
-        }
-        ring_output_gpu.end_writing();
-        spdlog::info("Exiting gpu2gpu thread (finished)");
-    });
-
-    auto gpu2cpu_thread = std::thread([&](){
-        spdlog::info("start gpu2cpu thread");
-        affinity::affinitySetCore(4);
-
-        ring_output_cpu.begin_writing();
-
-        bool try_again = true;
-        while (try_again) {
-            try {
-                auto read_seq = ReadSequence::earliest_or_latest(&ring_output_gpu, true, false);
-                try_again = false;
-
-                for (std::size_t n=0; n < niter; n++) {
-                    ReadSpan read_span(&read_seq, skip_offset, nbytes);
-                    void* data_read = read_span.data();
-                    {
-                        WriteSequence write_seq(&ring_output_cpu, seq_name, n, read_seq.header_size(), read_seq.header(), read_seq.nringlet(), skip_offset);
-                        WriteSpan write_span(&ring_output_cpu, nbytes, nonblocking);
-                        void *data_access = write_span.data();
-                        memory::memcpy_(data_access, ring_output_cpu.space(), data_read, ring_output_gpu.space(), nbytes);
-                        write_span.commit(nbytes);
-                        cuda::streamSynchronize();
-                    }
-                    read_seq.increment_to_next();
-
-                    if (!is_running) {
-                        spdlog::info("Exiting gpu2cpu thread (not running)");
-                        return;
-                    }
-                }
-            } catch(const RBException &e) {
-                if (e.status() == RBStatus::STATUS_END_OF_DATA) {
-                    if (try_again) {
-                        std::this_thread::yield();
-                    }
-                } else {
-                    spdlog::error("gpu2cpu RBException: {0}", e.what());
-                }
-            } catch(const std::runtime_error &e) {
-                spdlog::error("gpu2cpu std::runtime_error: {0}", e.what());
-            } catch(const std::exception &e) {
-                spdlog::error("gpu2cpu std::exception: {0}", e.what());
-            }
-        }
-        ring_output_cpu.end_writing();
-        spdlog::info("Exiting gpu2cpu thread (finished)");
-    });
-
-    auto recv_thread = std::thread([&](){
+    auto consumer = fiber_pool.submit([&](){
         spdlog::info("start receiving thread");
 
         // set numa affinity of receiver thread to 2
@@ -459,7 +318,7 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
             try {
 
                 // can we open a sequence if there is none ??
-                auto read_seq = ReadSequence::earliest_or_latest(&ring_output_cpu, true, false);
+                auto read_seq = ReadSequence::earliest_or_latest(&ring, true, false);
                 try_again = false;
 
                 for (std::size_t n=0; n < niter; n++) {
@@ -474,7 +333,7 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
                     void* data_read = read_span.data();
 
                     //Copy the data into a readable format
-                    uint32_t *my_data = static_cast<uint32_t*>(data_read);
+                    uint16_t *my_data = static_cast<uint16_t*>(data_read);
 
                     // check data
                     bool data_ok = true;
@@ -490,7 +349,9 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
                     EXPECT_EQ(data_ok, true);
 
                     received_packages++;
-                    received_bytes += (data_header->height * data_header->width * sizeof(uint32_t));
+                    received_bytes += (data_header->height * data_header->width * sizeof(uint16_t));
+
+                    boost::this_fiber::yield();
 
                     read_seq.increment_to_next();
 
@@ -517,18 +378,17 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
 
     });
 
-
-
-    // writer in main
-    {
+    auto producer = fiber_pool.submit([&]() {
         spdlog::info("start writing to buffer");
 
         // set numa affinity of writer thread to 1
         affinity::affinitySetCore(1);
 
-        ring_input_cpu.begin_writing();
+        ring.begin_writing();
 
+        bool nonblocking = false;
         // sequence with no name
+        std::string seq_name;
         ImageHeader my_header;
 
         // Writing to the buffer
@@ -541,36 +401,41 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
 
             {
                 //open a sequence on the ring.
-                WriteSequence write_seq(&ring_input_cpu, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
+                WriteSequence write_seq(&ring, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
                 EXPECT_EQ(write_seq.nringlet(), nringlets);
 
                 //reserve a "span" on this sequence to put our data
                 //point our pointer to the span's allocated memory
-                WriteSpan write_span(&ring_input_cpu, nbytes, nonblocking);
+                WriteSpan write_span(&ring, nbytes, nonblocking);
 
                 //create a pointer to pass our data to
                 void *data_access = write_span.data();
 
                 // write the frame data to the ring
-                create_frame(static_cast<uint32_t*>(data_access), width, height);
+                create_frame(static_cast<uint16_t*>(data_access), width, height);
 
                 //stop writing
                 //commit this span to memory
                 write_span.commit(nbytes);
-//                std::cout << "wrote frame: " << i << std::endl;
             }
-        }
-        ring_input_cpu.end_writing();
-    }
 
-    cpu2gpu_thread.join();
-    gpu2gpu_thread.join();
-    gpu2cpu_thread.join();
-    recv_thread.join();
-    
-    spdlog::info("received packages: {0} ", received_packages);
+            boost::this_fiber::yield();
+
+        }
+
+        ring.end_writing();
+    });
+
+
+    consumer->wait();
+    producer->wait();
+
+    fiber_pool.close_queue();
+
+    spdlog::info("received packages: {0}", received_packages);
     spdlog::info("received bytes: {0}", received_bytes);
 
 }
 
-#endif // WITH_CUDA
+
+#endif // RINGBUFFER_BOOST_FIBER

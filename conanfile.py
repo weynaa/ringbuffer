@@ -22,6 +22,7 @@ class RingbufferConan(ConanFile):
         "with_cuda": [True, False],
         "with_omp": [True, False],
         "with_numa": [True, False],
+        "enable_fibers": [True, False],
     }
 
     requires = (
@@ -35,7 +36,7 @@ class RingbufferConan(ConanFile):
         "with_cuda": False,
         "with_omp": False,
         "with_numa": False,
-        "Boost:without_fiber": False,
+        "enable_fibers": False,
     }
 
     # all sources are deployed with the package
@@ -44,6 +45,9 @@ class RingbufferConan(ConanFile):
     def requirements(self):
         if self.options.with_cuda:
             self.requires("cuda_dev_config/[>=1.0]@camposs/stable")
+
+        if self.options.enable_fibers:
+            self.requires("fiberpool/0.1@camposs/stable");
 
     def system_requirements(self):
         if tools.os_info.is_linux:
@@ -61,6 +65,8 @@ class RingbufferConan(ConanFile):
     def configure(self):
         if self.options.shared:
             self.options['Boost'].shared = True
+        if self.options.enable_fibers:
+            self.options['Boost'].without_fiber = False
 
     def imports(self):
         self.copy(src="bin", pattern="*.dll", dst="./bin") # Copies all dll files from packages bin folder to my "bin" folder
