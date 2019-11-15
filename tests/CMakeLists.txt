@@ -1,12 +1,10 @@
 
 set(TEST_SOURCES
-        test_memory.cpp
-#        test_main.cpp
-#        test_ring.cpp
-#        test_array.cpp
-#        test_pipeline.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_main.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_memory.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_ring.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/test_pipeline.cpp
         )
-
 
 add_executable(ringbuffer_test ${TEST_SOURCES})
 

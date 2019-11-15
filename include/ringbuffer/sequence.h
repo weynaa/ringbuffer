@@ -94,23 +94,23 @@ namespace ringbuffer {
 
     class SequenceWrapper {
     protected:
-        SequencePtr _sequence;
+        SequencePtr m_sequence;
     public:
-        inline explicit SequenceWrapper(SequencePtr sequence) : _sequence(sequence) {}
-        inline SequencePtr   sequence()    const { return _sequence; }
-        inline bool          is_finished() const { return _sequence->is_finished(); }
-        inline Ring*         ring()              { return _sequence->ring(); }
-        inline std::string   name()        const { return _sequence->name(); }
-        inline time_tag_type time_tag()    const { return _sequence->time_tag(); }
-        inline const void*   header()      const { return _sequence->header(); }
-        inline std::size_t   header_size() const { return _sequence->header_size(); }
-        inline std::size_t   nringlet()    const { return _sequence->nringlet(); }
-        inline std::size_t   begin()       const { return _sequence->begin(); }
+        inline explicit SequenceWrapper(SequencePtr sequence) : m_sequence(sequence) {}
+        inline SequencePtr   sequence()    const { return m_sequence; }
+        inline bool          is_finished() const { return m_sequence->is_finished(); }
+        inline Ring*         ring()              { return m_sequence->ring(); }
+        inline std::string   name()        const { return m_sequence->name(); }
+        inline time_tag_type time_tag()    const { return m_sequence->time_tag(); }
+        inline const void*   header()      const { return m_sequence->header(); }
+        inline std::size_t   header_size() const { return m_sequence->header_size(); }
+        inline std::size_t   nringlet()    const { return m_sequence->nringlet(); }
+        inline std::size_t   begin()       const { return m_sequence->begin(); }
     };
 
 
     class ReadSequence : public SequenceWrapper {
-        std::unique_ptr<state::Guarantee> _guarantee;
+        std::unique_ptr<state::Guarantee> m_guarantee;
     public:
         // @todo: See if can make these function bodies a bit more concise
         static ReadSequence earliest_or_latest(Ring* ring, bool with_guarantee, bool latest);
@@ -120,33 +120,23 @@ namespace ringbuffer {
 
         void increment_to_next();
 
-        inline std::unique_ptr<state::Guarantee>&       guarantee()       { return _guarantee; }
-        inline std::unique_ptr<state::Guarantee> const& guarantee() const { return _guarantee; }
-        /*
-          // @todo: This is needed for rfRingSequenceOpenSame, but it's not clear
-          //         that that API is really needed. Also need to delete
-          //         assignment and move constructors if this is implemented.
-        // Copy constructor points to same underlying RFsequence_impl object, but
-        //   creates its own guarantee.
-        ReadSequence(ReadSequence const& other)
-            : SequenceWrapper(other.sequence()),
-              _guarantee(new Guarantee(*other._guarantee)) {}
-        */
+        inline std::unique_ptr<state::Guarantee>&       guarantee()       { return m_guarantee; }
+        inline std::unique_ptr<state::Guarantee> const& guarantee() const { return m_guarantee; }
     };
 
 
     class WriteSequence : public SequenceWrapper {
-        std::size_t _end_offset_from_head;
+        std::size_t m_end_offset_from_head;
     public:
         WriteSequence(WriteSequence const& )            = delete;
         WriteSequence& operator=(WriteSequence const& ) = delete;
         WriteSequence(WriteSequence&& )                 = delete;
         WriteSequence& operator=(WriteSequence&& )      = delete;
 
-        inline WriteSequence(Ring* ring, const std::string& name,
-                             time_tag_type time_tag, std::size_t header_size,
-                             const void* header, std::size_t nringlet,
-                             std::size_t offset_from_head=0);
+        WriteSequence(Ring* ring, const std::string& name,
+                      time_tag_type time_tag, std::size_t header_size,
+                      const void* header, std::size_t nringlet,
+                      std::size_t offset_from_head=0);
 
         ~WriteSequence();
 

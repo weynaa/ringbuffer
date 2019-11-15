@@ -1,4 +1,4 @@
-/* **********************************************************************************
+/**********************************************************************************
 #                                                                                   #
 # Copyright (c) 2019,                                                               #
 # Research group CAMP                                                               #
@@ -41,78 +41,16 @@
 #                                                                                   #
 *************************************************************************************/
 
-#include "ringbuffer/sequence.h"
-#include "ringbuffer/ring.h"
-#include "ringbuffer/detail/guarantee.h"
 
-namespace ringbuffer {
+#include <gtest/gtest.h>
+#include "ringbuffer/detail/cuda.h"
 
-    Sequence::Sequence(Ring*        ring,
-                      std::string   name,
-                      time_tag_type time_tag,
-                      std::size_t   header_size,
-                      const void*   header,
-                      std::size_t   nringlet,
-                      std::size_t   begin)
-            : m_ring(ring), m_name(std::move(name)), m_time_tag(time_tag), m_nringlet(nringlet),
-              m_begin(begin),
-              m_end(RF_SEQUENCE_OPEN),
-              m_header((const char*)header,
-                      (const char*)header+header_size),
-              m_next(nullptr), m_readrefcount(0) {
-    }
+int main(int argc, char **argv) {
 
-    void Sequence::set_next(SequencePtr next) {
-        m_next = std::move(next);
-    }
+    #ifdef WITH_CUDA
+    ringbuffer::cuda::devicesSetNoSpinCPU();
+#endif
 
-
-    // @todo: See if can make these function bodies a bit more concise
-    ReadSequence ReadSequence::earliest_or_latest(Ring* ring, bool with_guarantee, bool latest) {
-        std::unique_ptr<state::Guarantee> guarantee;
-        SequencePtr sequence = ring->open_earliest_or_latest_sequence(with_guarantee, guarantee, latest);
-        return ReadSequence(sequence, guarantee);
-    }
-
-    ReadSequence ReadSequence::by_name(Ring* ring, const std::string& name, bool with_guarantee) {
-        std::unique_ptr<state::Guarantee> guarantee;
-        SequencePtr sequence = ring->open_sequence_by_name(name, with_guarantee, guarantee);
-        return ReadSequence(sequence, guarantee);
-    }
-
-    ReadSequence ReadSequence::at(Ring* ring, time_tag_type time_tag, bool with_guarantee) {
-        std::unique_ptr<state::Guarantee> guarantee;
-        SequencePtr sequence = ring->open_sequence_at(time_tag, with_guarantee, guarantee);
-        return ReadSequence(sequence, guarantee);
-    }
-
-    ReadSequence::ReadSequence(SequencePtr sequence, std::unique_ptr<state::Guarantee>& guarantee)
-            : SequenceWrapper(sequence), m_guarantee(std::move(guarantee)) {}
-
-    void ReadSequence::increment_to_next() {
-        m_sequence->ring()->increment_sequence_to_next(m_sequence, m_guarantee);
-    }
-
-
-    WriteSequence::WriteSequence(Ring* ring,
-                                 const std::string& name,
-                                 time_tag_type      time_tag,
-                                 std::size_t        header_size,
-                                 const void*        header,
-                                 std::size_t        nringlet,
-                                 std::size_t        offset_from_head)
-            : SequenceWrapper(ring->begin_sequence(name, time_tag,
-                                                   header_size,
-                                                   header, nringlet,
-                                                   offset_from_head)),
-              m_end_offset_from_head(0) {}
-
-    WriteSequence::~WriteSequence() {
-        this->ring()->finish_sequence(m_sequence, m_end_offset_from_head);
-    }
-
-    void WriteSequence::set_end_offset_from_head(std::size_t end_offset_from_head) {
-        m_end_offset_from_head = end_offset_from_head;
-    }
-
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
