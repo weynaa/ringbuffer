@@ -43,9 +43,6 @@
 
 #include "ringbuffer/detail/cuda.h"
 
-using namespace ringbuffer;
-using namespace ringbuffer::cuda;
-
 namespace ringbuffer {
     namespace cuda {
 
@@ -58,7 +55,7 @@ namespace ringbuffer {
 #ifdef WITH_CUDA
             *(cudaStream_t*)stream = g_cuda_stream;
 #else
-            RB_FAIL("Built with CUDA support (rfStreamGet)", RBStatus::STATUS_INVALID_STATE);
+            RB_FAIL("Built with CUDA support (streamGet)", RBStatus::STATUS_INVALID_STATE);
 #endif
             return RBStatus::STATUS_SUCCESS;
         }

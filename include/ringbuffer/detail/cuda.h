@@ -54,10 +54,12 @@
 #ifdef WITH_CUDA
 #include <cuda_runtime_api.h>
 #include <cuda.h>
+#endif // WITH_CUDA
 
 namespace ringbuffer {
     namespace cuda {
 
+#ifdef WITH_CUDA
         extern thread_local cudaStream_t g_cuda_stream;
 
 #if THRUST_VERSION >= 100800 // WAR for old Thrust version (e.g., on TK1)

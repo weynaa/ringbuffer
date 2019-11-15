@@ -39,7 +39,7 @@ class RingbufferConan(ConanFile):
     }
 
     # all sources are deployed with the package
-    exports_sources = "modules/*", "include/*", "src/*", "CMakeLists.txt"
+    exports_sources = "modules/*", "include/*", "src/*", "tests/*", "CMakeLists.txt"
 
     def requirements(self):
         if self.options.with_cuda:
@@ -73,6 +73,7 @@ class RingbufferConan(ConanFile):
 
     def _configure_cmake(self):
         cmake = CMake(self)
+        cmake.verbose = True
 
         def add_cmake_option(option, value):
             var_name = "{}".format(option).upper()

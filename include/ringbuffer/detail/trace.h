@@ -113,13 +113,12 @@ namespace ringbuffer {
             ScopedTracer(ScopedTracer const &) = delete;
             ScopedTracer &operator=(ScopedTracer const &) = delete;
 
-            ~ScopedTracer();
-
 #ifdef WITH_CUDA
             explicit ScopedTracer(const std::string& name, cudaStream_t stream = nullptr);
+            ~ScopedTracer();
 #else
-            inline explicit ScopedTracer(std::string name) : _name(std::move(name)) {}
-            inline ~ScopedTracer() {}
+            explicit ScopedTracer(std::string name) : _name(std::move(name)) {}
+            ~ScopedTracer() {};
 #endif
         };
     }
