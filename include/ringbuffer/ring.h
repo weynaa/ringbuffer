@@ -125,6 +125,8 @@ namespace ringbuffer {
         inline RBSpace     space()    const { return m_state->space; }
         inline void        set_core(int core)  { m_state->core = core; }
         inline int         core()    const { return m_state->core; }
+        inline void        set_device(int device)  { m_state->device = device; }
+        inline int         device()    const { return m_state->device; }
         inline void        lock()   { m_state->mutex.lock(); }
         inline void        unlock() { m_state->mutex.unlock(); }
         inline void*       locked_data()            const { return m_state->buf; }

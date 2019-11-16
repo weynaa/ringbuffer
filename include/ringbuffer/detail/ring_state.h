@@ -92,7 +92,8 @@ namespace ringbuffer {
             std::size_t nwrite_open{0};
             std::size_t nrealloc_pending{0};
 
-            int core;
+            int core{-1};
+            int device{-1};
 
             std::queue<SequencePtr> sequence_queue;
             std::map<std::string,SequencePtr> sequence_map;

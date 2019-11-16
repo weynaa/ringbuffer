@@ -43,6 +43,10 @@
 
 #include "ringbuffer/detail/cuda.h"
 
+#ifdef RINGBUFFER_BOOST_FIBER
+#include <boost/fiber/cuda/waitfor.hpp>
+#endif
+
 namespace ringbuffer {
     namespace cuda {
 
@@ -98,9 +102,15 @@ namespace ringbuffer {
 
         RBStatus streamSynchronize() {
 #ifdef WITH_CUDA
+#ifdef RINGBUFFER_BOOST_FIBER
+            auto result = boost::fibers::cuda::waitfor_all( g_cuda_stream); // suspend fiber till CUDA stream has finished
+            RB_CHECK_CUDA( std::get< 1 >( result),
+                           RBStatus::STATUS_DEVICE_ERROR);
+#else
             RB_CHECK_CUDA(cudaStreamSynchronize(g_cuda_stream),
                           RBStatus::STATUS_DEVICE_ERROR);
-#endif
+#endif // RINGBUFFER_BOOST_FIBER
+#endif // WITH_CUDA
             return RBStatus::STATUS_SUCCESS;
         }
 

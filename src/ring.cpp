@@ -119,6 +119,7 @@ namespace ringbuffer {
         state.nwrite_open = 0;
         state.nrealloc_pending = 0;
         state.core = -1;
+        state.device = -1;
 
 #ifdef WITH_CUDA
         RB_ASSERT_EXCEPTION(space==RBSpace::SPACE_SYSTEM       ||
@@ -191,6 +192,12 @@ namespace ringbuffer {
 
         //pointer new_buf    = (pointer)rfMalloc(new_nbyte, _space);
         //std::cout << "new_buf = " << (void*)new_buf << std::endl; // HACK TESTING
+
+#ifdef WITH_CUDA
+        if (state.device != -1) {
+            RB_ASSERT_EXCEPTION(cuda::deviceSet(state.device) == RBStatus::STATUS_SUCCESS, RBStatus::STATUS_DEVICE_ERROR);
+        }
+#endif // WITH_CUDA
 
         pointer new_buf = nullptr;
         //std::cout << "contig_span:    " << contiguous_span << std::endl;
