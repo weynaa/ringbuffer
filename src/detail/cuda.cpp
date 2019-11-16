@@ -43,6 +43,8 @@
 
 #include "ringbuffer/detail/cuda.h"
 
+#include <map>
+
 #ifdef RINGBUFFER_BOOST_FIBER
 #include <boost/fiber/cuda/waitfor.hpp>
 #endif
@@ -130,6 +132,114 @@ namespace ringbuffer {
             return RBStatus::STATUS_SUCCESS;
         }
 
+
+        RBStatus devicesEnableP2P() {
+#ifdef WITH_CUDA
+            int gpu_n;
+            RB_CHECK_CUDA(cudaGetDeviceCount(&gpu_n), RBStatus::STATUS_DEVICE_ERROR);
+            if (gpu_n < 2)
+            {
+                return RBStatus::STATUS_SUCCESS;
+            }
+
+            cudaDeviceProp prop[64];
+            int gpuid[64]; // we want to find the first two GPU's that can support P2P
+            int gpu_count = 0;   // GPUs that meet the criteria
+
+            for (int i=0; i < gpu_n; i++)
+            {
+                RB_CHECK_CUDA(cudaGetDeviceProperties(&prop[i], i),RBStatus::STATUS_DEVICE_ERROR);
+                // Only boards based on Fermi can support P2P
+                if ((prop[i].major >= 2)
+#ifdef _WIN32
+                    // on Windows (64-bit), the Tesla Compute Cluster driver for windows must be enabled
+                    && prop[i].tccDriver
+#endif
+                        )
+                {
+                    // This is an array of P2P capable GPUs
+                    gpuid[gpu_count++] = i;
+                }
+
+                spdlog::debug(" GPU{0} = '{1}' {2} capable of Peer-to-Peer (P2P)", i, prop[i].name, (IsGPUCapableP2P(&prop[i]) ? "IS " : "NOT"));
+            }
+
+            int can_access_peer;
+            std::map<std::tuple<int, int>, bool> p2pCapableGPUs;
+
+            // Show all the combinations of supported P2P GPUs
+            for (int i = 0; i < gpu_count; i++)
+            {
+                for (int j = 0; j < gpu_count; j++)
+                {
+                    if (gpuid[i] == gpuid[j])
+                    {
+                        continue;
+                    }
+                    RB_CHECK_CUDA(cudaDeviceCanAccessPeer(&can_access_peer, gpuid[i], gpuid[j]),RBStatus::STATUS_DEVICE_ERROR);
+                    spdlog::debug("Peer access from {0} (GPU{1}) -> {2} (GPU{3}) : {4}", prop[gpuid[i]].name, gpuid[i],
+                                  prop[gpuid[j]].name, gpuid[j] ,
+                                  can_access_peer ? "Yes" : "No");
+                    p2pCapableGPUs[std::make_tuple(gpuid[i], gpuid[j])] = can_access_peer != 0;
+                }
+            }
+
+            for (auto& it : p2pCapableGPUs) {
+                if (!it.second) continue;
+                int id0 = std::get<0>(it.first);
+                int id1 = std::get<1>(it.first);
+
+                spdlog::info("Enabling peer access between GPU{0} and GPU{1}.", id0, id1);
+
+                RB_CHECK_CUDA(cudaSetDevice(id0),RBStatus::STATUS_DEVICE_ERROR);
+                RB_CHECK_CUDA(cudaDeviceEnablePeerAccess(id1, 0),RBStatus::STATUS_DEVICE_ERROR);
+                RB_CHECK_CUDA(cudaSetDevice(id1),RBStatus::STATUS_DEVICE_ERROR);
+                RB_CHECK_CUDA(cudaDeviceEnablePeerAccess(id0, 0),RBStatus::STATUS_DEVICE_ERROR);
+            }
+
+            return RBStatus::STATUS_SUCCESS;
+#else
+            return RBStatus::STATUS_SUCCESS;
+#endif
+        }
+
+        RBStatus devicesDisableP2P() {
+#ifdef WITH_CUDA
+            int gpu_n;
+            RB_CHECK_CUDA(cudaGetDeviceCount(&gpu_n), RBStatus::STATUS_DEVICE_ERROR);
+            if (gpu_n < 2)
+            {
+                return RBStatus::STATUS_SUCCESS;
+            }
+
+            cudaDeviceProp prop[64];
+
+            for (int i=0; i < gpu_n; i++)
+            {
+                RB_CHECK_CUDA(cudaGetDeviceProperties(&prop[i], i),RBStatus::STATUS_DEVICE_ERROR);
+                // Only boards based on Fermi can support P2P
+                if ((prop[i].major >= 2)
+#ifdef _WIN32
+                    // on Windows (64-bit), the Tesla Compute Cluster driver for windows must be enabled
+                    && prop[i].tccDriver
+#endif
+                        )
+                {
+                    RB_CHECK_CUDA(cudaSetDevice(i),RBStatus::STATUS_DEVICE_ERROR);
+                    RB_CHECK_CUDA(cudaDeviceDisablePeerAccess(i),RBStatus::STATUS_DEVICE_ERROR);
+                }
+
+            }
+
+            return RBStatus::STATUS_SUCCESS;
+#else
+            return RBStatus::STATUS_SUCCESS;
+#endif
+        }
+
+
+
+
 #ifdef WITH_CUDA
 
         int get_cuda_device_cc() {
@@ -142,6 +252,13 @@ namespace ringbuffer {
             return cc_major*10 + cc_minor;
         }
 
+        bool IsGPUCapableP2P(cudaDeviceProp *pProp){
+#ifdef _WIN32
+            return (bool)(pProp->tccDriver ? true : false);
+#else
+            return (bool)(pProp->major >= 2);
+#endif
+        }
 
         /*
          * CUDAKernel implementation

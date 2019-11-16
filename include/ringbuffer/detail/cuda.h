@@ -127,12 +127,24 @@ namespace ringbuffer {
         RBStatus devicesSetNoSpinCPU();
 
         /*
+         * Enable P2P Transfers between all supported GPUs
+         */
+        RBStatus devicesEnableP2P();
+
+        /*
+         * Disable P2P Transfers between all supported GPUs
+         */
+        RBStatus devicesDisableP2P();
+
+        /*
          * Section blow is only enabled if ringbuffer is compiled with CUDA
          */
 
 #ifdef WITH_CUDA
 
         int get_cuda_device_cc();
+
+        bool IsGPUCapableP2P(cudaDeviceProp *pProp);
 
         /*
          * Helper class for JIT CUDA Kernels
