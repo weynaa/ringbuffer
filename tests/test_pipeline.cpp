@@ -233,7 +233,7 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
     spdlog::info("received bytes: {0}", received_bytes);
 
 }
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
 
 TEST(RingbufferTestSuite, RingbufferThreadedCuda){
     using namespace ringbuffer;
@@ -573,4 +573,4 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
 
 }
 
-#endif // WITH_CUDA
+#endif // RINGBUFFER_WITH_CUDA

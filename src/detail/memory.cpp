@@ -53,7 +53,7 @@ namespace ringbuffer {
 
         RBStatus getSpace(const void* ptr, RBSpace* space) {
             RB_ASSERT(ptr, RBStatus::STATUS_INVALID_POINTER);
-#ifndef WITH_CUDA
+#ifndef RINGBUFFER_WITH_CUDA
             *space = RBSpace::SPACE_SYSTEM;
 #else
             cudaPointerAttributes ptr_attrs;
@@ -101,7 +101,7 @@ namespace ringbuffer {
                     RB_ASSERT(!err, RBStatus::STATUS_MEM_ALLOC_FAILED);
                     break;
                 }
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
                 case RBSpace::SPACE_CUDA: {
                     RB_CHECK_CUDA(cudaMalloc((void**)&data, size),
                                   RBStatus::STATUS_MEM_ALLOC_FAILED);
@@ -136,7 +136,7 @@ namespace ringbuffer {
                 case RBSpace::SPACE_SYSTEM:
                     ::free(ptr);
                     break;
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
                 case RBSpace::SPACE_CUDA:
                     cudaFree(ptr);
                     break;
@@ -160,7 +160,7 @@ namespace ringbuffer {
             if( count ) {
                 RB_ASSERT(dst, RBStatus::STATUS_INVALID_POINTER);
                 RB_ASSERT(src, RBStatus::STATUS_INVALID_POINTER);
-#ifndef WITH_CUDA
+#ifndef RINGBUFFER_WITH_CUDA
                 ::memcpy(dst, src, count);
 #else
                 // Note: Explicitly dispatching to ::memcpy was found to be much faster
@@ -239,7 +239,7 @@ namespace ringbuffer {
             if( width*height ) {
                 RB_ASSERT(dst, RBStatus::STATUS_INVALID_POINTER);
                 RB_ASSERT(src, RBStatus::STATUS_INVALID_POINTER);
-#ifndef WITH_CUDA
+#ifndef RINGBUFFER_WITH_CUDA
                 memcpy2D(dst, dst_stride, src, src_stride, width, height);
 #else
                 // Note: Explicitly dispatching to ::memcpy was found to be much faster
@@ -313,7 +313,7 @@ namespace ringbuffer {
                     case RBSpace::SPACE_SYSTEM:
                         ::memset(ptr, value, count);
                         break;
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
                     case RBSpace::SPACE_CUDA_HOST:
                         ::memset(ptr, value, count);
                         break;
@@ -357,7 +357,7 @@ namespace ringbuffer {
                     case RBSpace::SPACE_SYSTEM:
                         memset2D(ptr, stride, value, width, height);
                         break;
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
                     case RBSpace::SPACE_CUDA_HOST:
                         memset2D(ptr, stride, value, width, height);
                         break;

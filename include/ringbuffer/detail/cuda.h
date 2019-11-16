@@ -51,15 +51,15 @@
 #include <type_traits>
 
 
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
 #include <cuda_runtime_api.h>
 #include <cuda.h>
-#endif // WITH_CUDA
+#endif // RINGBUFFER_WITH_CUDA
 
 namespace ringbuffer {
     namespace cuda {
 
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
         extern thread_local cudaStream_t g_cuda_stream;
 
 #if THRUST_VERSION >= 100800 // WAR for old Thrust version (e.g., on TK1)
@@ -88,7 +88,7 @@ namespace ringbuffer {
 		RB_ASSERT(cuda_ret == cudaSuccess, err); \
 	} while(0)
 
-#endif // WITH_CUDA
+#endif // RINGBUFFER_WITH_CUDA
 
         /*
          * get CUDA stream that is associated with this thread
@@ -116,6 +116,11 @@ namespace ringbuffer {
         RBStatus deviceSet(int  device);
 
         /*
+         * get number of CUDA Devices
+         */
+        RBStatus deviceGetGPUCount(int*  count);
+
+        /*
          * set CUDA Device by PCI Bus ID
          */
         RBStatus deviceSetById(const std::string& pci_bus_id);
@@ -140,7 +145,7 @@ namespace ringbuffer {
          * Section blow is only enabled if ringbuffer is compiled with CUDA
          */
 
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
 
         int get_cuda_device_cc();
 
@@ -269,10 +274,10 @@ namespace ringbuffer {
             ~child_stream();
         };
 
-#else // WITH_CUDA
+#else // RINGBUFFER_WITH_CUDA
         #define __host__
     #define __device__
-#endif // WITH_CUDA
+#endif // RINGBUFFER_WITH_CUDA
 
 
     } // namespace cuda

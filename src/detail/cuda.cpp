@@ -52,13 +52,13 @@
 namespace ringbuffer {
     namespace cuda {
 
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
         thread_local cudaStream_t g_cuda_stream = cudaStreamPerThread;
 #endif
 
         RBStatus streamGet(void* stream) {
             RB_ASSERT(stream, RBStatus::STATUS_INVALID_POINTER);
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
             *(cudaStream_t*)stream = g_cuda_stream;
 #else
             RB_FAIL("Built with CUDA support (streamGet)", RBStatus::STATUS_INVALID_STATE);
@@ -68,7 +68,7 @@ namespace ringbuffer {
 
         RBStatus streamSet(void const* stream) {
             RB_ASSERT(stream, RBStatus::STATUS_INVALID_POINTER);
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
             g_cuda_stream = *(cudaStream_t*)stream;
 #endif
             return RBStatus::STATUS_SUCCESS;
@@ -76,7 +76,7 @@ namespace ringbuffer {
 
         RBStatus deviceGet(int* device) {
             RB_ASSERT(device, RBStatus::STATUS_INVALID_POINTER);
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
             RB_CHECK_CUDA(cudaGetDevice(device), RBStatus::STATUS_DEVICE_ERROR);
 #else
             *device = -1;
@@ -85,14 +85,26 @@ namespace ringbuffer {
         }
 
         RBStatus deviceSet(int device) {
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
             RB_CHECK_CUDA(cudaSetDevice(device), RBStatus::STATUS_DEVICE_ERROR);
 #endif
             return RBStatus::STATUS_SUCCESS;
         }
 
+        RBStatus deviceGetGPUCount(int*  count) {
+#ifdef RINGBUFFER_WITH_CUDA
+            int gpu_n;
+            RB_CHECK_CUDA(cudaGetDeviceCount(&gpu_n), RBStatus::STATUS_DEVICE_ERROR);
+            *count = gpu_n;
+            return RBStatus::STATUS_SUCCESS;
+#endif
+            *count = 0;
+            return RBStatus::STATUS_SUCCESS;
+        }
+
+
         RBStatus deviceSetById(const std::string& pci_bus_id) {
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
             int device;
             RB_CHECK_CUDA(cudaDeviceGetByPCIBusId(&device, pci_bus_id.c_str()),
                           RBStatus::STATUS_DEVICE_ERROR);
@@ -103,7 +115,7 @@ namespace ringbuffer {
         }
 
         RBStatus streamSynchronize() {
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
 #ifdef RINGBUFFER_BOOST_FIBER
             auto result = boost::fibers::cuda::waitfor_all( g_cuda_stream); // suspend fiber till CUDA stream has finished
             RB_CHECK_CUDA( std::get< 1 >( result),
@@ -112,12 +124,12 @@ namespace ringbuffer {
             RB_CHECK_CUDA(cudaStreamSynchronize(g_cuda_stream),
                           RBStatus::STATUS_DEVICE_ERROR);
 #endif // RINGBUFFER_BOOST_FIBER
-#endif // WITH_CUDA
+#endif // RINGBUFFER_WITH_CUDA
             return RBStatus::STATUS_SUCCESS;
         }
 
         RBStatus devicesSetNoSpinCPU() {
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
             int old_device;
             RB_CHECK_CUDA(cudaGetDevice(&old_device), RBStatus::STATUS_DEVICE_ERROR);
             int ndevices;
@@ -134,7 +146,7 @@ namespace ringbuffer {
 
 
         RBStatus devicesEnableP2P() {
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
             int gpu_n;
             RB_CHECK_CUDA(cudaGetDeviceCount(&gpu_n), RBStatus::STATUS_DEVICE_ERROR);
             if (gpu_n < 2)
@@ -204,7 +216,7 @@ namespace ringbuffer {
         }
 
         RBStatus devicesDisableP2P() {
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
             int gpu_n;
             RB_CHECK_CUDA(cudaGetDeviceCount(&gpu_n), RBStatus::STATUS_DEVICE_ERROR);
             if (gpu_n < 2)
@@ -240,7 +252,7 @@ namespace ringbuffer {
 
 
 
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
 
         int get_cuda_device_cc() {
             int device;
@@ -445,7 +457,7 @@ namespace ringbuffer {
             sync_streams(_parent, this->_obj);
         }
 
-#endif // WITH_CUDA
+#endif // RINGBUFFER_WITH_CUDA
 
     } // namespace cuda
 } // namespace ringbuffer

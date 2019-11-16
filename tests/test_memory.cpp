@@ -87,7 +87,7 @@ TEST(RingbufferTestSuite, MemorySystem) {
     EXPECT_EQ(memory::free_(other_buf, space), RBStatus::STATUS_SUCCESS);
 }
 
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
 TEST(RingbufferTestSuite, MemoryCuda) {
 
     int width = 1024;
@@ -178,4 +178,4 @@ TEST(RingbufferTestSuite, MemoryCudaManaged) {
     EXPECT_EQ(memory::free_(new_buf, space), RBStatus::STATUS_SUCCESS);
 }
 
-#endif // WITH_CUDA
+#endif // RINGBUFFER_WITH_CUDA

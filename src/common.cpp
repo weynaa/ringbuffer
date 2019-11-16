@@ -121,7 +121,7 @@ namespace ringbuffer {
     }
 
     bool getDebugEnabled() {
-#if RINGBUFFER_DEBUG
+#ifdef RINGBUFFER_DEBUG
         return g_debug_enabled;
 #else
         return false;
@@ -129,7 +129,7 @@ namespace ringbuffer {
     }
 
     RBStatus setDebugEnabled(bool b) {
-#if !RINGBUFFER_DEBUG
+#ifndef RINGBUFFER_DEBUG
         return RBStatus ::STATUS_INVALID_STATE;
 #else
         g_debug_enabled = b;
@@ -138,7 +138,7 @@ namespace ringbuffer {
     }
 
     bool getCudaEnabled() {
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
         return true;
 #else
         return false;

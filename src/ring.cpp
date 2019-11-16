@@ -51,7 +51,7 @@
 #include "ringbuffer/detail/util.h"
 
 
-#ifdef WITH_NUMA
+#ifdef RINGBUFFER_WITH_NUMA
 #include <numa.h>
 #endif
 
@@ -121,7 +121,7 @@ namespace ringbuffer {
         state.core = -1;
         state.device = -1;
 
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
         RB_ASSERT_EXCEPTION(space==RBSpace::SPACE_SYSTEM       ||
                                   space==RBSpace::SPACE_CUDA         ||
                                   space==RBSpace::SPACE_CUDA_HOST    ||
@@ -193,11 +193,11 @@ namespace ringbuffer {
         //pointer new_buf    = (pointer)rfMalloc(new_nbyte, _space);
         //std::cout << "new_buf = " << (void*)new_buf << std::endl; // HACK TESTING
 
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
         if (state.device != -1) {
             RB_ASSERT_EXCEPTION(cuda::deviceSet(state.device) == RBStatus::STATUS_SUCCESS, RBStatus::STATUS_DEVICE_ERROR);
         }
-#endif // WITH_CUDA
+#endif // RINGBUFFER_WITH_CUDA
 
         pointer new_buf = nullptr;
         //std::cout << "contig_span:    " << contiguous_span << std::endl;
@@ -209,7 +209,7 @@ namespace ringbuffer {
         //std::cout << "Allocating " << new_nbyte << std::endl;
         RB_ASSERT_EXCEPTION(memory::malloc_((void**)&new_buf, new_nbyte, state.space) == RBStatus::STATUS_SUCCESS,
                             RBStatus::STATUS_MEM_ALLOC_FAILED);
-#ifdef WITH_NUMA
+#ifdef RINGBUFFER_WITH_NUMA
         if( state.core != -1 ) {
             RB_ASSERT_EXCEPTION(numa_available() != -1, RBStatus::STATUS_UNSUPPORTED);
             int node = numa_node_of_cpu(state.core);

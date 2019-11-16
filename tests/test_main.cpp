@@ -47,7 +47,7 @@
 
 int main(int argc, char **argv) {
 
-    #ifdef WITH_CUDA
+    #ifdef RINGBUFFER_WITH_CUDA
     ringbuffer::cuda::devicesSetNoSpinCPU();
 #endif
 

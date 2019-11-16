@@ -47,6 +47,7 @@
 #include <string>
 #include <stdexcept>
 #include "spdlog/spdlog.h"
+#include "ringbuffer/config.h"
 
 namespace ringbuffer {
 

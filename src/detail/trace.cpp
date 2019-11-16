@@ -68,7 +68,7 @@ namespace ringbuffer {
 
         } // namespace profile_detail
 
-#ifdef WITH_CUDA
+#ifdef RINGBUFFER_WITH_CUDA
 
         namespace nvtx {
 
@@ -143,7 +143,7 @@ namespace ringbuffer {
             }
         }
 
-#endif // WITH_CUDA
+#endif // RINGBUFFER_WITH_CUDA
     } // namespace trace
 } // namespace ringbuffer
 
