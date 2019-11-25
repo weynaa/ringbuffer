@@ -49,22 +49,32 @@ namespace ringbuffer {
 
         void Guarantee::create(std::size_t offset) {
             m_offset = offset;
-            m_ring->_add_guarantee(m_offset);
+            if (m_ring) {
+                m_ring->_add_guarantee(m_offset);
+            }
         }
 
-        void Guarantee::destroy() { m_ring->_remove_guarantee(m_offset); }
+        void Guarantee::destroy() {
+            if (m_ring) {
+                m_ring->_remove_guarantee(m_offset);
+            }
+        }
 
-        Guarantee::Guarantee(Ring* ring)
+        Guarantee::Guarantee(const std::shared_ptr<Ring>& ring)
                 : m_ring(ring), m_offset(0) {
-            auto& state = m_ring->get_state();
-            state::lock_guard_type lock(state.mutex);
-            this->create(state.tail);
+            if (m_ring) {
+                auto& state = m_ring->get_state();
+                state::lock_guard_type lock(state.mutex);
+                this->create(state.tail);
+            }
         }
 
         Guarantee::~Guarantee() {
-            auto& state = m_ring->get_state();
-            state::lock_guard_type lock(state.mutex);
-            this->destroy();
+            if (m_ring) {
+                auto& state = m_ring->get_state();
+                state::lock_guard_type lock(state.mutex);
+                this->destroy();
+            }
         }
 
         void Guarantee::move_nolock(std::size_t offset) {
@@ -74,7 +84,7 @@ namespace ringbuffer {
 
         std::size_t Guarantee::offset() const { return m_offset; }
 
-        std::unique_ptr<Guarantee> new_guarantee(Ring* ring) {
+        std::unique_ptr<Guarantee> new_guarantee(const std::shared_ptr<Ring>& ring) {
             // @todo: Use std::make_unique here (requires C++14)
             return std::unique_ptr<Guarantee>(new Guarantee(ring));
         }

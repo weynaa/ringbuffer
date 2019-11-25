@@ -47,7 +47,7 @@
 
 namespace ringbuffer {
 
-    Sequence::Sequence(Ring*        ring,
+    Sequence::Sequence(const std::shared_ptr<Ring>& ring,
                       std::string   name,
                       time_tag_type time_tag,
                       std::size_t   header_size,
@@ -68,19 +68,19 @@ namespace ringbuffer {
 
 
     // @todo: See if can make these function bodies a bit more concise
-    ReadSequence ReadSequence::earliest_or_latest(Ring* ring, bool with_guarantee, bool latest) {
+    ReadSequence ReadSequence::earliest_or_latest(const std::shared_ptr<Ring>& ring, bool with_guarantee, bool latest) {
         std::unique_ptr<state::Guarantee> guarantee;
         SequencePtr sequence = ring->open_earliest_or_latest_sequence(with_guarantee, guarantee, latest);
         return ReadSequence(sequence, guarantee);
     }
 
-    ReadSequence ReadSequence::by_name(Ring* ring, const std::string& name, bool with_guarantee) {
+    ReadSequence ReadSequence::by_name(const std::shared_ptr<Ring>& ring, const std::string& name, bool with_guarantee) {
         std::unique_ptr<state::Guarantee> guarantee;
         SequencePtr sequence = ring->open_sequence_by_name(name, with_guarantee, guarantee);
         return ReadSequence(sequence, guarantee);
     }
 
-    ReadSequence ReadSequence::at(Ring* ring, time_tag_type time_tag, bool with_guarantee) {
+    ReadSequence ReadSequence::at(const std::shared_ptr<Ring>& ring, time_tag_type time_tag, bool with_guarantee) {
         std::unique_ptr<state::Guarantee> guarantee;
         SequencePtr sequence = ring->open_sequence_at(time_tag, with_guarantee, guarantee);
         return ReadSequence(sequence, guarantee);
@@ -94,7 +94,7 @@ namespace ringbuffer {
     }
 
 
-    WriteSequence::WriteSequence(Ring* ring,
+    WriteSequence::WriteSequence(const std::shared_ptr<Ring>& ring,
                                  const std::string& name,
                                  time_tag_type      time_tag,
                                  std::size_t        header_size,

@@ -72,17 +72,17 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
     std::string name = "depthcamera01";
     RBSpace space = RBSpace::SPACE_SYSTEM;
 
-    Ring ring(name, space);
-    EXPECT_EQ(ring.name(), name);
-    EXPECT_EQ(ring.space(), space);
+    auto ring = Ring::create(name, space);
+    EXPECT_EQ(ring->name(), name);
+    EXPECT_EQ(ring->space(), space);
 
     // set numa affinity of data
-    ring.set_core(1);
+    ring->set_core(1);
 
     //Set our ring variables
     std::size_t niter = 1000;
 
-    std::size_t nringlets = 1; //dimensionality of our ring.
+    std::size_t nringlets = 1; //dimensionality of our ring->
     std::size_t width = 1024;
     std::size_t height = 1024;
     std::size_t npixels = width*height;
@@ -90,7 +90,7 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
     std::size_t buffer_bytes = 4*nbytes; // 4x nbytes as ringbuffer size ==> could also be std::size_t(-1) to use default
 
     //resize ring to fit the data
-    ring.resize(nbytes, buffer_bytes, nringlets);
+    ring->resize(nbytes, buffer_bytes, nringlets);
 
     std::size_t skip_offset = 0;
     std::size_t my_header_size = sizeof(ImageHeader);
@@ -122,7 +122,7 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
             try {
 
                 // can we open a sequence if there is none ??
-                auto read_seq = ReadSequence::earliest_or_latest(&ring, true, false);
+                auto read_seq = ReadSequence::earliest_or_latest(ring, true, false);
                 try_again = false;
 
                 for (std::size_t n=0; n < niter; n++) {
@@ -189,7 +189,7 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
         // set numa affinity of writer thread to 1
         affinity::affinitySetCore(1);
 
-        ring.begin_writing();
+        ring->begin_writing();
 
         bool nonblocking = false;
         // sequence with no name
@@ -205,13 +205,13 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
             my_header.height = height;
 
             {
-                //open a sequence on the ring.
-                WriteSequence write_seq(&ring, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
+                //open a sequence on the ring->
+                WriteSequence write_seq(ring, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
                 EXPECT_EQ(write_seq.nringlet(), nringlets);
 
                 //reserve a "span" on this sequence to put our data
                 //point our pointer to the span's allocated memory
-                WriteSpan write_span(&ring, nbytes, nonblocking);
+                WriteSpan write_span(ring, nbytes, nonblocking);
 
                 //create a pointer to pass our data to
                 void *data_access = write_span.data();
@@ -225,7 +225,7 @@ TEST(RingbufferTestSuite, RingbufferThreaded){
             }
         }
 
-        ring.end_writing();
+        ring->end_writing();
     }
 
     recv_thread.join();
@@ -247,21 +247,21 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
         // more metadata relevant to the image we're buffering
     };
 
-    Ring ring_input_cpu("depthcamera01_cpu", RBSpace::SPACE_SYSTEM);
+    auto ring_input_cpu = Ring::create("depthcamera01_cpu", RBSpace::SPACE_SYSTEM);
     // set numa affinity of data
-    ring_input_cpu.set_core(2);
+    ring_input_cpu->set_core(2);
 
-    Ring ring_input_gpu("depthcamera01_gpu", RBSpace::SPACE_CUDA);
+    auto ring_input_gpu = Ring::create("depthcamera01_gpu", RBSpace::SPACE_CUDA);
     // set numa affinity of data
-    ring_input_gpu.set_core(3);
+    ring_input_gpu->set_core(3);
 
-    Ring ring_output_gpu("result01_gpu", RBSpace::SPACE_CUDA);
+    auto ring_output_gpu= Ring::create("result01_gpu", RBSpace::SPACE_CUDA);
     // set numa affinity of data
-    ring_output_gpu.set_core(4);
+    ring_output_gpu->set_core(4);
 
-    Ring ring_output_cpu("result01_cpu", RBSpace::SPACE_SYSTEM);
+    auto ring_output_cpu = Ring::create("result01_cpu", RBSpace::SPACE_SYSTEM);
     // set numa affinity of data
-    ring_output_gpu.set_core(1);
+    ring_output_cpu->set_core(1);
 
 
 
@@ -276,10 +276,10 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
     std::size_t buffer_bytes = 4*nbytes; // 4x nbytes as ringbuffer size ==> could also be std::size_t(-1) to use default
 
     //resize ring to fit the data
-    ring_input_cpu.resize(nbytes, buffer_bytes, nringlets);
-    ring_input_gpu.resize(nbytes, buffer_bytes, nringlets);
-    ring_output_gpu.resize(nbytes, buffer_bytes, nringlets);
-    ring_output_cpu.resize(nbytes, buffer_bytes, nringlets);
+    ring_input_cpu->resize(nbytes, buffer_bytes, nringlets);
+    ring_input_gpu->resize(nbytes, buffer_bytes, nringlets);
+    ring_output_gpu->resize(nbytes, buffer_bytes, nringlets);
+    ring_output_cpu->resize(nbytes, buffer_bytes, nringlets);
 
     std::size_t skip_offset = 0;
     std::size_t my_header_size = sizeof(ImageHeader);
@@ -306,22 +306,22 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
         spdlog::info("start cpu2gpu thread");
         affinity::affinitySetCore(2);
 
-        ring_input_gpu.begin_writing();
+        ring_input_gpu->begin_writing();
 
         bool try_again = true;
         while (try_again) {
             try {
-                auto read_seq = ReadSequence::earliest_or_latest(&ring_input_cpu, true, false);
+                auto read_seq = ReadSequence::earliest_or_latest(ring_input_cpu, true, false);
                 try_again = false;
 
                 for (std::size_t n=0; n < niter; n++) {
                     ReadSpan read_span(&read_seq, skip_offset, nbytes);
                     void* data_read = read_span.data();
                     {
-                        WriteSequence write_seq(&ring_input_gpu, seq_name, n, read_seq.header_size(), read_seq.header(), read_seq.nringlet(), skip_offset);
-                        WriteSpan write_span(&ring_input_gpu, nbytes, nonblocking);
+                        WriteSequence write_seq(ring_input_gpu, seq_name, n, read_seq.header_size(), read_seq.header(), read_seq.nringlet(), skip_offset);
+                        WriteSpan write_span(ring_input_gpu, nbytes, nonblocking);
                         void *data_access = write_span.data();
-                        memory::memcpy_(data_access, ring_input_gpu.space(), data_read, ring_input_cpu.space(), nbytes);
+                        memory::memcpy_(data_access, ring_input_gpu->space(), data_read, ring_input_cpu->space(), nbytes);
                         write_span.commit(nbytes);
                         cuda::streamSynchronize();
                     }
@@ -346,7 +346,7 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
                 spdlog::error("cpu2gpu std::exception: {0}", e.what());
             }
         }
-        ring_input_gpu.end_writing();
+        ring_input_gpu->end_writing();
         spdlog::info("Exiting cpu2gpu thread (finished)");
     });
 
@@ -356,22 +356,22 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
         spdlog::info("start gpu2gpu thread");
         affinity::affinitySetCore(3);
 
-        ring_output_gpu.begin_writing();
+        ring_output_gpu->begin_writing();
 
         bool try_again = true;
         while (try_again) {
             try {
-                auto read_seq = ReadSequence::earliest_or_latest(&ring_input_gpu, true, false);
+                auto read_seq = ReadSequence::earliest_or_latest(ring_input_gpu, true, false);
                 try_again = false;
 
                 for (std::size_t n=0; n < niter; n++) {
                     ReadSpan read_span(&read_seq, skip_offset, nbytes);
                     void* data_read = read_span.data();
                     {
-                        WriteSequence write_seq(&ring_output_gpu, seq_name, n, read_seq.header_size(), read_seq.header(), read_seq.nringlet(), skip_offset);
-                        WriteSpan write_span(&ring_output_gpu, nbytes, nonblocking);
+                        WriteSequence write_seq(ring_output_gpu, seq_name, n, read_seq.header_size(), read_seq.header(), read_seq.nringlet(), skip_offset);
+                        WriteSpan write_span(ring_output_gpu, nbytes, nonblocking);
                         void *data_access = write_span.data();
-                        memory::memcpy_(data_access, ring_output_gpu.space(), data_read, ring_input_gpu.space(), nbytes);
+                        memory::memcpy_(data_access, ring_output_gpu->space(), data_read, ring_input_gpu->space(), nbytes);
                         write_span.commit(nbytes);
                         cuda::streamSynchronize();
                     }
@@ -396,7 +396,7 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
                 spdlog::error("gpu2gpu std::exception: {0}", e.what());
             }
         }
-        ring_output_gpu.end_writing();
+        ring_output_gpu->end_writing();
         spdlog::info("Exiting gpu2gpu thread (finished)");
     });
 
@@ -404,22 +404,22 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
         spdlog::info("start gpu2cpu thread");
         affinity::affinitySetCore(4);
 
-        ring_output_cpu.begin_writing();
+        ring_output_cpu->begin_writing();
 
         bool try_again = true;
         while (try_again) {
             try {
-                auto read_seq = ReadSequence::earliest_or_latest(&ring_output_gpu, true, false);
+                auto read_seq = ReadSequence::earliest_or_latest(ring_output_gpu, true, false);
                 try_again = false;
 
                 for (std::size_t n=0; n < niter; n++) {
                     ReadSpan read_span(&read_seq, skip_offset, nbytes);
                     void* data_read = read_span.data();
                     {
-                        WriteSequence write_seq(&ring_output_cpu, seq_name, n, read_seq.header_size(), read_seq.header(), read_seq.nringlet(), skip_offset);
-                        WriteSpan write_span(&ring_output_cpu, nbytes, nonblocking);
+                        WriteSequence write_seq(ring_output_cpu, seq_name, n, read_seq.header_size(), read_seq.header(), read_seq.nringlet(), skip_offset);
+                        WriteSpan write_span(ring_output_cpu, nbytes, nonblocking);
                         void *data_access = write_span.data();
-                        memory::memcpy_(data_access, ring_output_cpu.space(), data_read, ring_output_gpu.space(), nbytes);
+                        memory::memcpy_(data_access, ring_output_cpu->space(), data_read, ring_output_gpu->space(), nbytes);
                         write_span.commit(nbytes);
                         cuda::streamSynchronize();
                     }
@@ -444,7 +444,7 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
                 spdlog::error("gpu2cpu std::exception: {0}", e.what());
             }
         }
-        ring_output_cpu.end_writing();
+        ring_output_cpu->end_writing();
         spdlog::info("Exiting gpu2cpu thread (finished)");
     });
 
@@ -459,7 +459,7 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
             try {
 
                 // can we open a sequence if there is none ??
-                auto read_seq = ReadSequence::earliest_or_latest(&ring_output_cpu, true, false);
+                auto read_seq = ReadSequence::earliest_or_latest(ring_output_cpu, true, false);
                 try_again = false;
 
                 for (std::size_t n=0; n < niter; n++) {
@@ -526,7 +526,7 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
         // set numa affinity of writer thread to 1
         affinity::affinitySetCore(1);
 
-        ring_input_cpu.begin_writing();
+        ring_input_cpu->begin_writing();
 
         // sequence with no name
         ImageHeader my_header;
@@ -541,12 +541,12 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
 
             {
                 //open a sequence on the ring.
-                WriteSequence write_seq(&ring_input_cpu, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
+                WriteSequence write_seq(ring_input_cpu, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
                 EXPECT_EQ(write_seq.nringlet(), nringlets);
 
                 //reserve a "span" on this sequence to put our data
                 //point our pointer to the span's allocated memory
-                WriteSpan write_span(&ring_input_cpu, nbytes, nonblocking);
+                WriteSpan write_span(ring_input_cpu, nbytes, nonblocking);
 
                 //create a pointer to pass our data to
                 void *data_access = write_span.data();
@@ -560,7 +560,7 @@ TEST(RingbufferTestSuite, RingbufferThreadedCuda){
 //                std::cout << "wrote frame: " << i << std::endl;
             }
         }
-        ring_input_cpu.end_writing();
+        ring_input_cpu->end_writing();
     }
 
     cpu2gpu_thread.join();

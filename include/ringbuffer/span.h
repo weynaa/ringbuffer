@@ -51,7 +51,7 @@
 namespace ringbuffer {
 
     class Span {
-        Ring*        m_ring;
+        std::shared_ptr<Ring> m_ring;
         std::size_t  m_size;
 
     protected:
@@ -65,10 +65,10 @@ namespace ringbuffer {
         Span(Span&& )                 = delete;
         Span& operator=(Span&& )      = delete;
 
-        Span(Ring* ring, std::size_t size);
+        Span(const std::shared_ptr<Ring>& ring, std::size_t size);
         virtual ~Span();
 
-        Ring*           ring() const;
+        std::shared_ptr<Ring> ring() const;
         std::size_t     size() const;
         // Note: These two are only safe to read while a span is open (preventing resize)
         std::size_t     stride() const;
@@ -90,7 +90,7 @@ namespace ringbuffer {
         WriteSpan(WriteSpan&& )                 = delete;
         WriteSpan& operator=(WriteSpan&& )      = delete;
 
-        WriteSpan(Ring* ring, std::size_t size, bool nonblocking);
+        WriteSpan(const std::shared_ptr<Ring>& ring, std::size_t size, bool nonblocking);
         ~WriteSpan() override;
 
         WriteSpan* commit(std::size_t size);

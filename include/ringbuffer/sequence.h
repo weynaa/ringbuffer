@@ -55,7 +55,7 @@ namespace ringbuffer {
     class Sequence {
         friend class Ring;
         enum { RF_SEQUENCE_OPEN = (std::size_t)-1 };
-        Ring*          m_ring;
+        std::shared_ptr<Ring> m_ring;
         std::string    m_name;
         time_tag_type  m_time_tag;
         std::size_t    m_nringlet;
@@ -66,7 +66,7 @@ namespace ringbuffer {
         std::size_t    m_readrefcount; // ever used ??
 
     public:
-        Sequence(Ring*         ring,
+        Sequence(const std::shared_ptr<Ring>&  ring,
                  std::string   name,
                  time_tag_type time_tag,
                  std::size_t   header_size,
@@ -81,7 +81,7 @@ namespace ringbuffer {
         void set_next(SequencePtr next);
 
         inline bool          is_finished() const { return m_end != RF_SEQUENCE_OPEN; }
-        inline Ring*         ring()              { return m_ring; }
+        inline std::shared_ptr<Ring> ring() { return m_ring; }
         inline std::string   name()        const { return m_name; }
         inline time_tag_type time_tag()    const { return m_time_tag; }
         inline const void*   header()      const { return m_header.size() ? &m_header[0] : nullptr; }
@@ -99,7 +99,7 @@ namespace ringbuffer {
         inline explicit SequenceWrapper(SequencePtr sequence) : m_sequence(sequence) {}
         inline SequencePtr   sequence()    const { return m_sequence; }
         inline bool          is_finished() const { return m_sequence->is_finished(); }
-        inline Ring*         ring()              { return m_sequence->ring(); }
+        inline std::shared_ptr<Ring> ring() { return m_sequence->ring(); }
         inline std::string   name()        const { return m_sequence->name(); }
         inline time_tag_type time_tag()    const { return m_sequence->time_tag(); }
         inline const void*   header()      const { return m_sequence->header(); }
@@ -113,9 +113,9 @@ namespace ringbuffer {
         std::unique_ptr<state::Guarantee> m_guarantee;
     public:
         // @todo: See if can make these function bodies a bit more concise
-        static ReadSequence earliest_or_latest(Ring* ring, bool with_guarantee, bool latest);
-        static ReadSequence by_name(Ring* ring, const std::string& name, bool with_guarantee);
-        static ReadSequence at(Ring* ring, time_tag_type time_tag, bool with_guarantee);
+        static ReadSequence earliest_or_latest(const std::shared_ptr<Ring>& ring, bool with_guarantee, bool latest);
+        static ReadSequence by_name(const std::shared_ptr<Ring>& ring, const std::string& name, bool with_guarantee);
+        static ReadSequence at(const std::shared_ptr<Ring>& ring, time_tag_type time_tag, bool with_guarantee);
         ReadSequence(SequencePtr sequence, std::unique_ptr<state::Guarantee>& guarantee);
 
         void increment_to_next();
@@ -133,7 +133,7 @@ namespace ringbuffer {
         WriteSequence(WriteSequence&& )                 = delete;
         WriteSequence& operator=(WriteSequence&& )      = delete;
 
-        WriteSequence(Ring* ring, const std::string& name,
+        WriteSequence(const std::shared_ptr<Ring>& ring, const std::string& name,
                       time_tag_type time_tag, std::size_t header_size,
                       const void* header, std::size_t nringlet,
                       std::size_t offset_from_head=0);

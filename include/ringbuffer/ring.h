@@ -103,6 +103,10 @@ namespace ringbuffer {
         state::RingState& get_state();
         const state::RingState& get_state() const;
 
+
+        // private constructor to avoid creation of non-shared_ptr instances
+        Ring(std::string name, RBSpace space);
+
     public:
 
         // No copy or move
@@ -112,9 +116,10 @@ namespace ringbuffer {
         Ring& operator=(Ring&& )      = delete;
 
         // constructor/destructor
-        Ring(std::string name, RBSpace space);
+        static std::shared_ptr<Ring> create(std::string name, RBSpace space) {
+            return std::shared_ptr<Ring>( new Ring(name, space) );
+        }
         ~Ring();
-
 
         // public interface
         void resize(std::size_t max_contiguous_span,

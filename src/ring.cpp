@@ -410,7 +410,7 @@ namespace ringbuffer {
         // Cannot have existing sequence with same name
         RB_ASSERT_EXCEPTION(state.sequence_map.count(name)==0,              RBStatus::STATUS_INVALID_ARGUMENT);
         RB_ASSERT_EXCEPTION(state.sequence_time_tag_map.count(time_tag)==0, RBStatus::STATUS_INVALID_ARGUMENT);
-        SequencePtr sequence(new Sequence(this, name, time_tag, header_size,
+        SequencePtr sequence(new Sequence(shared_from_this(), name, time_tag, header_size,
                                                    header, nringlet, seq_begin));
         if( state.sequence_queue.size() ) {
             state.sequence_queue.back()->set_next(sequence);
@@ -439,7 +439,7 @@ namespace ringbuffer {
         std::unique_ptr<state::Guarantee> scoped_guarantee;
         if( with_guarantee ) {
             // Ensure a guarantee is held while waiting for sequence to exist
-            scoped_guarantee = state::new_guarantee(this);
+            scoped_guarantee = state::new_guarantee(shared_from_this());
         }
         auto& state = get_state();
         state::unique_lock_type lock(state.mutex);
@@ -480,7 +480,7 @@ namespace ringbuffer {
         std::unique_ptr<state::Guarantee> scoped_guarantee;
         if( with_guarantee ) {
             // Ensure a guarantee is held while waiting for sequence to exist
-            scoped_guarantee = state::new_guarantee(this);
+            scoped_guarantee = state::new_guarantee(shared_from_this());
         }
         auto& state = get_state();
         state::unique_lock_type lock(state.mutex);
@@ -547,7 +547,7 @@ namespace ringbuffer {
         std::unique_ptr<state::Guarantee> scoped_guarantee;
         if( with_guarantee ) {
             // Ensure a guarantee is held while waiting for sequence to exist
-            scoped_guarantee = state::new_guarantee(this);
+            scoped_guarantee = state::new_guarantee(shared_from_this());
         }
         auto& state = get_state();
         state::unique_lock_type lock(state.mutex);

@@ -49,16 +49,16 @@ namespace ringbuffer {
 
     void Span::set_base_size(std::size_t size) { m_size = size; }
 
-    Span::Span(Ring* ring, std::size_t size) : m_ring(ring), m_size(size) {}
+    Span::Span(const std::shared_ptr<Ring>& ring, std::size_t size) : m_ring(ring), m_size(size) {}
     Span::~Span() {}
 
-    Ring* Span::ring() const { return m_ring; }
+    std::shared_ptr<Ring> Span::ring() const { return m_ring; }
     std::size_t Span::size()     const { return m_size; }
     std::size_t Span::stride()   const { return m_ring->current_stride(); }
     std::size_t Span::nringlet() const { return m_ring->current_nringlet(); }
 
 
-    WriteSpan::WriteSpan(Ring* ring, std::size_t size, bool nonblocking)
+    WriteSpan::WriteSpan(const std::shared_ptr<Ring>& ring, std::size_t size, bool nonblocking)
             : Span(ring, size), m_begin(0), m_commit_size(size), m_data(nullptr) {
         this->ring()->reserve_span(size, &m_begin, &m_data, nonblocking);
     }
@@ -95,7 +95,7 @@ namespace ringbuffer {
         if( m_sequence->guarantee() ) {
             return 0;
         }
-        const auto* ring = this->ring();
+        const auto ring = this->ring();
         std::size_t tail = ring->current_tail_offset();
         return std::max(std::min(delta_type(tail - m_begin),
                                  delta_type(this->size())),

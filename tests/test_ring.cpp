@@ -58,17 +58,17 @@ TEST(RingbufferTestSuite, RingClass) {
     std::string name = "testring1";
     RBSpace space = RBSpace::SPACE_SYSTEM;
 
-    Ring ring(name, space);
-    EXPECT_EQ(ring.name(), name);
-    EXPECT_EQ(ring.space(), space);
+    auto ring = Ring::create(name, space);
+    EXPECT_EQ(ring->name(), name);
+    EXPECT_EQ(ring->space(), space);
 
 //Set our ring variables
-    std::size_t nringlets = 1; //dimensionality of our ring.
+    std::size_t nringlets = 1; //dimensionality of our ring->
     std::size_t nbytes = sizeof(float) * 8; //number of bytes we are putting in
     std::size_t buffer_bytes = 4 * nbytes;
 
 //resize ring to fit the data
-    ring.resize(nbytes, buffer_bytes, nringlets);
+    ring->resize(nbytes, buffer_bytes, nringlets);
 
 //generate some dummy variables
     std::size_t skip_time_tag = -1;
@@ -86,19 +86,19 @@ TEST(RingbufferTestSuite, RingClass) {
 
 // Writing to the buffer
     {
-        ring.begin_writing();
+        ring->begin_writing();
         {
 
             //we can find our sequence by this name later on
             bool nonblocking = true;
 
-//open a sequence on the ring.
-            WriteSequence write_seq(&ring, seq_name, skip_time_tag, my_header_size, my_header, nringlets, skip_offset);
+//open a sequence on the ring->
+            WriteSequence write_seq(ring, seq_name, skip_time_tag, my_header_size, my_header, nringlets, skip_offset);
             EXPECT_EQ(write_seq.nringlet(), nringlets);
 
 //reserve a "span" on this sequence to put our data
 //point our pointer to the span's allocated memory
-            WriteSpan write_span(&ring, nbytes, nonblocking);
+            WriteSpan write_span(ring, nbytes, nonblocking);
 
 //create a pointer to pass our data to
             void *data_access = write_span.data();
@@ -110,13 +110,13 @@ TEST(RingbufferTestSuite, RingClass) {
             write_span.commit(nbytes);
 
         }
-        ring.end_writing();
+        ring->end_writing();
     }
 
 // Reading from the buffer
 
     {
-        auto read_seq = ReadSequence::by_name(&ring, seq_name, true);
+        auto read_seq = ReadSequence::by_name(ring, seq_name, true);
         ReadSpan read_span(&read_seq, skip_offset, nbytes);
 
 //Access the data from the span with a pointer
@@ -150,18 +150,18 @@ TEST(RingbufferTestSuite, RingClassMulti) {
     std::string name = "testring1";
     RBSpace space = RBSpace::SPACE_SYSTEM;
 
-    Ring ring(name, space);
-    EXPECT_EQ(ring.name(), name);
-    EXPECT_EQ(ring.space(), space);
+    auto ring = Ring::create(name, space);
+    EXPECT_EQ(ring->name(), name);
+    EXPECT_EQ(ring->space(), space);
 
 //Set our ring variables
     std::size_t niter = 10000;
-    std::size_t nringlets = 1; //dimensionality of our ring.
+    std::size_t nringlets = 1; //dimensionality of our ring->
     std::size_t nbytes = sizeof(float) * 8; //number of bytes we are putting in
     std::size_t buffer_bytes = niter * nbytes;
 
 //resize ring to fit the data
-    ring.resize(nbytes, buffer_bytes, nringlets);
+    ring->resize(nbytes, buffer_bytes, nringlets);
 
 //generate some dummy variables
     std::size_t skip_offset = 0;
@@ -174,7 +174,7 @@ TEST(RingbufferTestSuite, RingClassMulti) {
     EXPECT_EQ(sizeof(data), nbytes);
 
     {
-        ring.begin_writing();
+        ring->begin_writing();
 
         bool nonblocking = true;
         TestHeader my_header;
@@ -188,13 +188,13 @@ TEST(RingbufferTestSuite, RingClassMulti) {
 //we can find our sequence by this name later on
                 std::string seq_name = "mysequence" + std::to_string(i);
 
-//open a sequence on the ring.
-                WriteSequence write_seq(&ring, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
+//open a sequence on the ring->
+                WriteSequence write_seq(ring, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
                 EXPECT_EQ(write_seq.nringlet(), nringlets);
 
 //reserve a "span" on this sequence to put our data
 //point our pointer to the span's allocated memory
-                WriteSpan write_span(&ring, nbytes, nonblocking);
+                WriteSpan write_span(ring, nbytes, nonblocking);
 
 //create a pointer to pass our data to
                 void *data_access = write_span.data();
@@ -207,13 +207,13 @@ TEST(RingbufferTestSuite, RingClassMulti) {
             }
         }
 
-        ring.end_writing();
+        ring->end_writing();
     }
 
 // Reading from the buffer
 
     {
-        auto read_seq = ReadSequence::earliest_or_latest(&ring, true, false);
+        auto read_seq = ReadSequence::earliest_or_latest(ring, true, false);
         for (std::size_t i = 0; i < niter - 1; i++) {
             ReadSpan read_span(&read_seq, skip_offset, nbytes);
 

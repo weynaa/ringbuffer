@@ -51,7 +51,7 @@ namespace ringbuffer {
     namespace state {
 
         class Guarantee {
-            Ring*       m_ring;
+            std::shared_ptr<Ring> m_ring;
             std::size_t m_offset;
 
             void create(std::size_t offset);
@@ -61,14 +61,14 @@ namespace ringbuffer {
             Guarantee(Guarantee const& ) = delete;
             Guarantee& operator=(Guarantee const& ) = delete;
 
-            explicit Guarantee(Ring* ring);
+            explicit Guarantee(const std::shared_ptr<Ring>& ring);
             ~Guarantee();
 
             void move_nolock(std::size_t offset);
             std::size_t offset() const;
         };
 
-        std::unique_ptr<Guarantee> new_guarantee(Ring* ring);
+        std::unique_ptr<Guarantee> new_guarantee(const std::shared_ptr<Ring>& ring);
         
     }
 }

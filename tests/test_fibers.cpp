@@ -77,17 +77,17 @@ TEST(RingbufferTestSuite, RingbufferFiber){
     std::string name = "depthcamera01";
     RBSpace space = RBSpace::SPACE_SYSTEM;
 
-    Ring ring(name, space);
-    EXPECT_EQ(ring.name(), name);
-    EXPECT_EQ(ring.space(), space);
+    auto ring = Ring::create(name, space);
+    EXPECT_EQ(ring->name(), name);
+    EXPECT_EQ(ring->space(), space);
 
     // set numa affinity of data
-    ring.set_core(1);
+    ring->set_core(1);
 
     //Set our ring variables
     std::size_t niter = 1000;
 
-    std::size_t nringlets = 1; //dimensionality of our ring.
+    std::size_t nringlets = 1; //dimensionality of our ring->
     std::size_t width = 1024;
     std::size_t height = 1024;
     std::size_t npixels = width*height;
@@ -95,7 +95,7 @@ TEST(RingbufferTestSuite, RingbufferFiber){
     std::size_t buffer_bytes = 4*nbytes; // 4x nbytes as ringbuffer size ==> could also be std::size_t(-1) to use default
 
     //resize ring to fit the data
-    ring.resize(nbytes, buffer_bytes, nringlets);
+    ring->resize(nbytes, buffer_bytes, nringlets);
 
     std::size_t skip_offset = 0;
     std::size_t my_header_size = sizeof(ImageHeader);
@@ -127,7 +127,7 @@ TEST(RingbufferTestSuite, RingbufferFiber){
             try {
 
                 // can we open a sequence if there is none ??
-                auto read_seq = ReadSequence::earliest_or_latest(&ring, true, false);
+                auto read_seq = ReadSequence::earliest_or_latest(ring, true, false);
                 try_again = false;
 
                 for (std::size_t n=0; n < niter; n++) {
@@ -193,7 +193,7 @@ TEST(RingbufferTestSuite, RingbufferFiber){
         // set numa affinity of writer thread to 1
         affinity::affinitySetCore(1);
 
-        ring.begin_writing();
+        ring->begin_writing();
 
         bool nonblocking = false;
         // sequence with no name
@@ -209,13 +209,13 @@ TEST(RingbufferTestSuite, RingbufferFiber){
             my_header.height = height;
 
             {
-                //open a sequence on the ring.
-                WriteSequence write_seq(&ring, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
+                //open a sequence on the ring->
+                WriteSequence write_seq(ring, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
                 EXPECT_EQ(write_seq.nringlet(), nringlets);
 
                 //reserve a "span" on this sequence to put our data
                 //point our pointer to the span's allocated memory
-                WriteSpan write_span(&ring, nbytes, nonblocking);
+                WriteSpan write_span(ring, nbytes, nonblocking);
 
                 //create a pointer to pass our data to
                 void *data_access = write_span.data();
@@ -232,7 +232,7 @@ TEST(RingbufferTestSuite, RingbufferFiber){
 
         }
 
-        ring.end_writing();
+        ring->end_writing();
     });
 
 
@@ -268,17 +268,17 @@ TEST(RingbufferTestSuite, RingbufferFiberPool){
     std::string name = "depthcamera01";
     RBSpace space = RBSpace::SPACE_SYSTEM;
 
-    Ring ring(name, space);
-    EXPECT_EQ(ring.name(), name);
-    EXPECT_EQ(ring.space(), space);
+    auto ring = Ring::create(name, space);
+    EXPECT_EQ(ring->name(), name);
+    EXPECT_EQ(ring->space(), space);
 
     // set numa affinity of data
-    ring.set_core(1);
+    ring->set_core(1);
 
     //Set our ring variables
     std::size_t niter = 1000;
 
-    std::size_t nringlets = 1; //dimensionality of our ring.
+    std::size_t nringlets = 1; //dimensionality of our ring->
     std::size_t width = 1024;
     std::size_t height = 1024;
     std::size_t npixels = width*height;
@@ -286,7 +286,7 @@ TEST(RingbufferTestSuite, RingbufferFiberPool){
     std::size_t buffer_bytes = 4*nbytes; // 4x nbytes as ringbuffer size ==> could also be std::size_t(-1) to use default
 
     //resize ring to fit the data
-    ring.resize(nbytes, buffer_bytes, nringlets);
+    ring->resize(nbytes, buffer_bytes, nringlets);
 
     std::size_t skip_offset = 0;
     std::size_t my_header_size = sizeof(ImageHeader);
@@ -318,7 +318,7 @@ TEST(RingbufferTestSuite, RingbufferFiberPool){
             try {
 
                 // can we open a sequence if there is none ??
-                auto read_seq = ReadSequence::earliest_or_latest(&ring, true, false);
+                auto read_seq = ReadSequence::earliest_or_latest(ring, true, false);
                 try_again = false;
 
                 for (std::size_t n=0; n < niter; n++) {
@@ -384,7 +384,7 @@ TEST(RingbufferTestSuite, RingbufferFiberPool){
         // set numa affinity of writer thread to 1
         affinity::affinitySetCore(1);
 
-        ring.begin_writing();
+        ring->begin_writing();
 
         bool nonblocking = false;
         // sequence with no name
@@ -400,13 +400,13 @@ TEST(RingbufferTestSuite, RingbufferFiberPool){
             my_header.height = height;
 
             {
-                //open a sequence on the ring.
-                WriteSequence write_seq(&ring, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
+                //open a sequence on the ring->
+                WriteSequence write_seq(ring, seq_name, i, my_header_size, &my_header, nringlets, skip_offset);
                 EXPECT_EQ(write_seq.nringlet(), nringlets);
 
                 //reserve a "span" on this sequence to put our data
                 //point our pointer to the span's allocated memory
-                WriteSpan write_span(&ring, nbytes, nonblocking);
+                WriteSpan write_span(ring, nbytes, nonblocking);
 
                 //create a pointer to pass our data to
                 void *data_access = write_span.data();
@@ -423,7 +423,7 @@ TEST(RingbufferTestSuite, RingbufferFiberPool){
 
         }
 
-        ring.end_writing();
+        ring->end_writing();
     });
 
 
