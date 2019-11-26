@@ -23,6 +23,8 @@ class RingbufferConan(ConanFile):
         "with_omp": [True, False],
         "with_numa": [True, False],
         "enable_fibers": [True, False],
+        "enable_debug": [True, False],
+        "enable_trace": [True, False],
     }
 
     requires = (
@@ -37,6 +39,8 @@ class RingbufferConan(ConanFile):
         "with_omp": False,
         "with_numa": False,
         "enable_fibers": False,
+        "enable_debug": False,
+        "enable_trace": False,
     }
 
     # all sources are deployed with the package
