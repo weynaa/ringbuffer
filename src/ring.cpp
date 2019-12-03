@@ -598,7 +598,7 @@ namespace ringbuffer {
                             std::size_t*  size_,
                             std::size_t*  begin_,
                             void**        data_) {
-        RB_ASSERT_EXCEPTION(rsequence,             RBStatus::STATUS_INVALID_HANDLE);
+        RB_ASSERT_EXCEPTION(rsequence,             RBStatus::STATUS_INVALID_SEQUENCE_HANDLE);
         RB_ASSERT_EXCEPTION(size_,                 RBStatus::STATUS_INVALID_POINTER);
         RB_ASSERT_EXCEPTION(begin_,                RBStatus::STATUS_INVALID_POINTER);
         RB_ASSERT_EXCEPTION(data_,                 RBStatus::STATUS_INVALID_POINTER);

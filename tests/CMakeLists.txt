@@ -11,7 +11,7 @@ add_executable(ringbuffer_test ${TEST_SOURCES})
 
 target_link_libraries(ringbuffer_test
         ringbuffer
-        CONAN_PKG::gtest
+        CONAN_PKG::GTest
         ${RINGBUFFER_CUDA_LIBRARIES}
         )
 

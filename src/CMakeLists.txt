@@ -65,6 +65,9 @@ if (RINGBUFFER_WITH_NUMA)
     target_link_libraries(ringbuffer PUBLIC NUMA::NUMA)
 endif()
 
+if(WIN32)
+    target_link_libraries(ringbuffer PUBLIC CONAN_PKG::pthread-win32)
+
 install(TARGETS ringbuffer DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ringbuffer DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
 install(FILES ${PROJECT_BINARY_DIR}/include/ringbuffer/config.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ringbuffer)
