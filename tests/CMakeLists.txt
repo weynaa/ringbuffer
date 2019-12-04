@@ -15,7 +15,7 @@ target_link_libraries(ringbuffer_test
         ${RINGBUFFER_CUDA_LIBRARIES}
         )
 
-if (ENABLE_FIBERS)
+if(ENABLE_FIBERS)
     target_link_libraries(ringbuffer_test
             CONAN_PKG::fiberpool
             )

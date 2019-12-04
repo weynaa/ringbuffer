@@ -57,6 +57,12 @@ if (RINGBUFFER_WITH_CUDA)
     target_link_libraries(ringbuffer PUBLIC ${RINGBUFFER_CUDA_LIBRARIES})
 endif()
 
+# if (WIN32)
+#     target_link_libraries(ringbuffer_test
+#             CONAN_PKG::pthread-win32
+#             )    
+# endif()
+
 if (RINGBUFFER_WITH_OMP)
     target_link_libraries(ringbuffer PUBLIC OpenMP::OpenMP_CXX)
 endif()

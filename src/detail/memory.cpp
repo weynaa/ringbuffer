@@ -96,10 +96,14 @@ namespace ringbuffer {
             void* data;
             switch( space ) {
                 case RBSpace::SPACE_SYSTEM: {
-                    //data = std::aligned_alloc(std::max(RB_ALIGNMENT,8), size);
+#ifdef _WIN32
+					//data = std::aligned_alloc(std::max(RINGBUFFER_ALIGNMENT,8), size);
+					data = _aligned_malloc(std::max(RINGBUFFER_ALIGNMENT, 8), size);
+#else
                     int err = ::posix_memalign((void**)&data, std::max(RINGBUFFER_ALIGNMENT,8), size);
                     RB_ASSERT(!err, RBStatus::STATUS_MEM_ALLOC_FAILED);
-                    break;
+#endif
+					break;
                 }
 #ifdef RINGBUFFER_WITH_CUDA
                 case RBSpace::SPACE_CUDA: {
@@ -134,6 +138,8 @@ namespace ringbuffer {
             }
             switch( space ) {
                 case RBSpace::SPACE_SYSTEM:
+
+					// Windows: _aligned_free
                     ::free(ptr);
                     break;
 #ifdef RINGBUFFER_WITH_CUDA
