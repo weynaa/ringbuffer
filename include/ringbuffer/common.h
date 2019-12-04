@@ -59,7 +59,7 @@ namespace ringbuffer {
         STATUS_END_OF_DATA                              = 1,
         STATUS_WOULD_BLOCK                              = 2,
         STATUS_INVALID_POINTER                          = 8,
-        STATUS_INVALID_HANDLE                           = 9,
+        STATUS_INVALID_SEQUENCE_HANDLE                           = 9,
         STATUS_INVALID_ARGUMENT                         = 10,
         STATUS_INVALID_STATE                            = 11,
         STATUS_INVALID_SPACE                            = 12,

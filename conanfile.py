@@ -51,7 +51,11 @@ class RingbufferConan(ConanFile):
             self.requires("cuda_dev_config/[>=1.0]@camposs/stable")
 
         if self.options.enable_fibers:
-            self.requires("fiberpool/0.1@camposs/stable");
+            self.requires("fiberpool/0.1@camposs/stable")
+
+        # this should be migrated to hwloc
+        # if self.settings.os == "Windows":
+        #     self.requires("pthread-win32/2.9.1@camposs/stable")
 
     def system_requirements(self):
         if tools.os_info.is_linux:
