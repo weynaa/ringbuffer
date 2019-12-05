@@ -272,6 +272,7 @@ namespace ringbuffer {
 #endif
         }
 
+
         /*
          * CUDAKernel implementation
          */
@@ -369,7 +370,7 @@ namespace ringbuffer {
             }
         }
 
-#if __cplusplus >= 201103L
+#if RINGBUFFER_CXX_STANDARD >= 201103L
         stream::stream(cuda::stream &&other) noexcept : _obj(0) { this->swap(other); }
 #endif
 

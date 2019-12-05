@@ -10,6 +10,8 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "ringbuffer/visibility.h"
+
 #ifdef RINGBUFFER_BOOST_FIBER
 #include <boost/fiber/all.hpp>
 #include <boost/fiber/mutex.hpp>
@@ -21,16 +23,16 @@
 namespace ringbuffer {
 
     // Forward Declarations
-    class Ring;
+    class RINGBUFFER_EXPORT Ring;
 
-    class Sequence;
-    class SequenceWrapper;
-    class ReadSequence;
-    class WriteSequence;
+    class RINGBUFFER_EXPORT Sequence;
+    class RINGBUFFER_EXPORT SequenceWrapper;
+    class RINGBUFFER_EXPORT ReadSequence;
+    class RINGBUFFER_EXPORT WriteSequence;
 
-    class Span;
-    class ReadSpan;
-    class WriteSpan;
+    class RINGBUFFER_EXPORT Span;
+    class RINGBUFFER_EXPORT ReadSpan;
+    class RINGBUFFER_EXPORT WriteSpan;
 
     // type definitions
     typedef std::shared_ptr<Sequence> SequencePtr;
@@ -45,9 +47,9 @@ namespace ringbuffer {
 
     namespace state {
         // Forward Declarations
-        class RingState;
-        class RingReallocLock;
-        class Guarantee;
+        struct RINGBUFFER_EXPORT RingState;
+        class RINGBUFFER_EXPORT RingReallocLock;
+        class RINGBUFFER_EXPORT Guarantee;
 
         // type definitions
 #ifdef RINGBUFFER_BOOST_FIBER

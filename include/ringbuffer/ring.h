@@ -44,7 +44,10 @@
 #ifndef RINGBUFFER_RING_H
 #define RINGBUFFER_RING_H
 
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+
 #include "ringbuffer/common.h"
+#include "ringbuffer/visibility.h"
 #include "ringbuffer/types.h"
 #include "ringbuffer/detail/ring_state.h"
 
@@ -52,7 +55,7 @@
 
 namespace ringbuffer {
 
-    class Ring : public std::enable_shared_from_this<Ring> {
+    class RINGBUFFER_EXPORT Ring : public std::enable_shared_from_this<Ring> {
         friend class ReadSequence;
         friend class WriteSequence;
         friend class state::RingReallocLock;

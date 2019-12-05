@@ -44,13 +44,16 @@
 #ifndef RINGBUFFER_GUARANTEE_H
 #define RINGBUFFER_GUARANTEE_H
 
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+
 #include "ringbuffer/common.h"
+#include "ringbuffer/visibility.h"
 #include "ringbuffer/types.h"
 
 namespace ringbuffer {
     namespace state {
 
-        class Guarantee {
+        class RINGBUFFER_EXPORT Guarantee {
             std::shared_ptr<Ring> m_ring;
             std::size_t m_offset;
 
@@ -60,16 +63,17 @@ namespace ringbuffer {
         public:
             Guarantee(Guarantee const& ) = delete;
             Guarantee& operator=(Guarantee const& ) = delete;
+			Guarantee(Guarantee&&);
+			Guarantee& operator=(Guarantee&&);
 
             explicit Guarantee(const std::shared_ptr<Ring>& ring);
             ~Guarantee();
+
 
             void move_nolock(std::size_t offset);
             std::size_t offset() const;
         };
 
-        std::unique_ptr<Guarantee> new_guarantee(const std::shared_ptr<Ring>& ring);
-        
     }
 }
 

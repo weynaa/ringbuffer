@@ -45,16 +45,17 @@
 #define RINGBUFFER_AFFINITY_H
 
 #include "ringbuffer/common.h"
+#include "ringbuffer/visibility.h"
 
 namespace ringbuffer{
     namespace affinity {
 
         // Note: Pass core=-1 to unbind
-        RBStatus affinitySetCore(int core);
+        RBStatus RINGBUFFER_EXPORT affinitySetCore(int core);
 
-        RBStatus affinityGetCore(int* core);
+        RBStatus RINGBUFFER_EXPORT affinityGetCore(int* core);
 
-        RBStatus affinitySetOpenMPCores(std::size_t nthread, const int* thread_cores);
+        RBStatus RINGBUFFER_EXPORT affinitySetOpenMPCores(std::size_t nthread, const int* thread_cores);
     }
 }
 

@@ -47,6 +47,9 @@
 #ifndef RINGBUFFER_WITH_CUDA
 #cmakedefine RINGBUFFER_WITH_CUDA
 #endif
+#ifndef RINGBUFFER_WITH_NVTOOLSEXT
+#cmakedefine RINGBUFFER_WITH_NVTOOLSEXT
+#endif
 #ifndef RINGBUFFER_WITH_OMP
 #cmakedefine RINGBUFFER_WITH_OMP
 #endif
@@ -62,5 +65,52 @@
 #ifndef RINGBUFFER_BOOST_FIBER
 #cmakedefine RINGBUFFER_BOOST_FIBER
 #endif
+
+#cmakedefine RINGBUFFER_BUILD_STATIC
+#cmakedefine RINGBUFFER_BUILD_MULTITHREADED
+
+#cmakedefine RINGBUFFER_TARGET_APPLE
+#cmakedefine RINGBUFFER_TARGET_UNIX
+#cmakedefine RINGBUFFER_TARGET_WINDOWS
+
+/* C++ standard */
+#ifdef _MSC_VER
+#ifdef _MSVC_LANG
+#define RINGBUFFER_CXX_STANDARD _MSVC_LANG
+#else
+#define RINGBUFFER_CXX_STANDARD 201103L
+#endif
+#else
+#define RINGBUFFER_CXX_STANDARD __cplusplus
+#endif
+
+// Visibility Macro Helpers
+
+#ifdef RINGBUFFER_TARGET_WINDOWS
+#define RINGBUFFER_VISIBILITY_EXPORT __declspec(dllexport)
+#else
+#define RINGBUFFER_VISIBILITY_EXPORT __attribute__((visibility("default")))
+#endif
+
+#ifdef RINGBUFFER_TARGET_WINDOWS
+#define RINGBUFFER_VISIBILITY_INLINE_MEMBER_EXPORT
+#else
+#define RINGBUFFER_VISIBILITY_INLINE_MEMBER_EXPORT __attribute__((visibility("default")))
+#endif
+
+#ifdef RINGBUFFER_TARGET_WINDOWS
+#define RINGBUFFER_VISIBILITY_IMPORT __declspec(dllimport)
+#else
+#define RINGBUFFER_VISIBILITY_IMPORT __attribute__((visibility("default")))
+#endif
+
+#define RINGBUFFER_VISIBILITY_STATIC
+
+#ifdef RINGBUFFER_TARGET_WINDOWS
+#define RINGBUFFER_VISIBILITY_LOCAL
+#else
+#define RINGBUFFER_VISIBILITY_LOCAL __attribute__((visibility("hidden")))
+#endif
+
 
 #endif //RINGBUFFER_CONFIG_H_IN_H

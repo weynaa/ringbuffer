@@ -45,6 +45,7 @@
 #define RINGFLOW_MEMORY_H
 
 #include "ringbuffer/common.h"
+#include "ringbuffer/visibility.h"
 
 #ifndef RINGBUFFER_ALIGNMENT
     #define RINGBUFFER_ALIGNMENT 4096//512
@@ -57,23 +58,23 @@ namespace ringbuffer {
         /*
          * allocate memory of size in given space
          */
-        RBStatus malloc_(void** ptr, std::size_t size, RBSpace space);
+        RBStatus RINGBUFFER_EXPORT malloc_(void** ptr, std::size_t size, RBSpace space);
 
         /*
          * free allocated memory from given space
          */
-        RBStatus free_(void* ptr, RBSpace space);
+        RBStatus RINGBUFFER_EXPORT free_(void* ptr, RBSpace space);
 
         /*
          * get space associated with given address
          */
-        RBStatus getSpace(const void* ptr, RBSpace* space);
+        RBStatus RINGBUFFER_EXPORT getSpace(const void* ptr, RBSpace* space);
 
         /*
          * copy memory from one space to another
          * Note: This is sync wrt host but async wrt device
          */
-        RBStatus memcpy_(void*       dst,
+        RBStatus RINGBUFFER_EXPORT memcpy_(void*       dst,
                          RBSpace     dst_space,
                          const void* src,
                          RBSpace     src_space,
@@ -82,7 +83,7 @@ namespace ringbuffer {
         /*
          * copy 2D array from one space to another
          */
-        RBStatus memcpy2D(void*       dst,
+        RBStatus RINGBUFFER_EXPORT memcpy2D(void*       dst,
                           std::size_t dst_stride,
                           RBSpace     dst_space,
                           const void* src,
@@ -95,7 +96,7 @@ namespace ringbuffer {
          * set memory to given value
          * Note: only works for byte types
          */
-        RBStatus memset_(void*        ptr,
+        RBStatus RINGBUFFER_EXPORT memset_(void*        ptr,
                          RBSpace      space,
                          int          value,
                          std::size_t  count);
@@ -104,7 +105,7 @@ namespace ringbuffer {
          * set memory of 2D array to given value
          * Note: only works for byte types
          */
-        RBStatus memset2D(void*       ptr,
+        RBStatus RINGBUFFER_EXPORT memset2D(void*       ptr,
                           std::size_t stride,
                           RBSpace     space,
                           int         value,
@@ -114,7 +115,7 @@ namespace ringbuffer {
         /*
          * get global alignment
          */
-        std::size_t getAlignment();
+        std::size_t RINGBUFFER_EXPORT getAlignment();
 
     }
 }

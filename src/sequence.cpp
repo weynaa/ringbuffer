@@ -62,32 +62,44 @@ namespace ringbuffer {
               m_next(nullptr), m_readrefcount(0) {
     }
 
+	Sequence::~Sequence() = default;
+	Sequence::Sequence(Sequence&&) = default;
+	Sequence& Sequence::operator=(Sequence&&) = default;
+
     void Sequence::set_next(SequencePtr next) {
         m_next = std::move(next);
     }
+
+	SequenceWrapper::~SequenceWrapper() = default;
+	SequenceWrapper::SequenceWrapper(SequenceWrapper&&) = default;
+	SequenceWrapper& SequenceWrapper::operator=(SequenceWrapper&&) = default;
 
 
     // @todo: See if can make these function bodies a bit more concise
     ReadSequence ReadSequence::earliest_or_latest(const std::shared_ptr<Ring>& ring, bool with_guarantee, bool latest) {
         std::unique_ptr<state::Guarantee> guarantee;
         SequencePtr sequence = ring->open_earliest_or_latest_sequence(with_guarantee, guarantee, latest);
-        return ReadSequence(sequence, guarantee);
+        return std::move(ReadSequence(sequence, guarantee));
     }
 
     ReadSequence ReadSequence::by_name(const std::shared_ptr<Ring>& ring, const std::string& name, bool with_guarantee) {
         std::unique_ptr<state::Guarantee> guarantee;
         SequencePtr sequence = ring->open_sequence_by_name(name, with_guarantee, guarantee);
-        return ReadSequence(sequence, guarantee);
+        return std::move(ReadSequence(sequence, guarantee));
     }
 
     ReadSequence ReadSequence::at(const std::shared_ptr<Ring>& ring, time_tag_type time_tag, bool with_guarantee) {
         std::unique_ptr<state::Guarantee> guarantee;
         SequencePtr sequence = ring->open_sequence_at(time_tag, with_guarantee, guarantee);
-        return ReadSequence(sequence, guarantee);
+        return std::move(ReadSequence(sequence, guarantee));
     }
 
     ReadSequence::ReadSequence(SequencePtr sequence, std::unique_ptr<state::Guarantee>& guarantee)
             : SequenceWrapper(sequence), m_guarantee(std::move(guarantee)) {}
+
+	ReadSequence::~ReadSequence() = default;
+	ReadSequence::ReadSequence(ReadSequence&&) = default;
+	ReadSequence& ReadSequence::operator=(ReadSequence&&) = default;
 
     void ReadSequence::increment_to_next() {
         m_sequence->ring()->increment_sequence_to_next(m_sequence, m_guarantee);
@@ -107,11 +119,12 @@ namespace ringbuffer {
                                                    offset_from_head)),
               m_end_offset_from_head(0) {}
 
+
     WriteSequence::~WriteSequence() {
         this->ring()->finish_sequence(m_sequence, m_end_offset_from_head);
     }
 
-    void WriteSequence::set_end_offset_from_head(std::size_t end_offset_from_head) {
+	void WriteSequence::set_end_offset_from_head(std::size_t end_offset_from_head) {
         m_end_offset_from_head = end_offset_from_head;
     }
 

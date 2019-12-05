@@ -72,24 +72,35 @@ namespace ringbuffer {
 
         namespace nvtx {
 
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
             thread_local TracerStreamMap g_nvtx_streams;
+#endif
 
             void AsyncTracer::range_start_callback(cudaStream_t stream, cudaError_t status, void* userData) {
                 auto* range = (AsyncTracer*)userData;
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
                 range->_id = nvtxRangeStartEx(&range->_attrs);
+#endif
             }
 
             void AsyncTracer::range_end_callback(cudaStream_t stream, cudaError_t status, void* userData) {
                 auto* range = (AsyncTracer*)userData;
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
                 nvtxRangeEnd(range->_id);
                 range->_id = 0;
+#endif
                 delete range;
             }
 
-            AsyncTracer::AsyncTracer(cudaStream_t stream) : _stream(stream), _id(0), _attrs() {}
+            AsyncTracer::AsyncTracer(cudaStream_t stream) : _stream(stream)
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
+				, _id(0), _attrs()
+#endif
+			{}
 
             void AsyncTracer::start(const char* msg, uint32_t color, uint32_t category) {
                 _msg = msg;
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
                 _attrs.version       = NVTX_VERSION;
                 _attrs.size          = NVTX_EVENT_ATTRIB_STRUCT_SIZE;
                 _attrs.colorType     = NVTX_COLOR_ARGB;
@@ -97,6 +108,7 @@ namespace ringbuffer {
                 _attrs.messageType   = NVTX_MESSAGE_TYPE_ASCII;
                 _attrs.message.ascii = _msg.c_str();
                 _attrs.category      = category;
+#endif
                 cudaStreamAddCallback(_stream, range_start_callback, (void*)this, 0);
             }
 
@@ -107,6 +119,7 @@ namespace ringbuffer {
         } // namespace nvtx
 
 
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
         void ScopedTracer::build_attrs(nvtxEventAttributes_t* attrs) {
             ::memset(attrs, 0, sizeof(*attrs));
             attrs->version       = NVTX_VERSION;
@@ -117,12 +130,14 @@ namespace ringbuffer {
             attrs->message.ascii = _name.c_str();
             attrs->category      = _category;
         }
+#endif
 
         ScopedTracer::ScopedTracer(const std::string& name, cudaStream_t stream)
                 : _name(name),
                   _color(profile_detail::get_color(profile_detail::simple_hash(name.c_str()))),
                   _category(123),
                   _stream(stream) {
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
             if( _stream ) {
                 nvtx::g_nvtx_streams[_stream].push(new nvtx::AsyncTracer(stream));
                 nvtx::g_nvtx_streams[_stream].back()->start(("[G]"+_name).c_str(),
@@ -132,15 +147,20 @@ namespace ringbuffer {
                 this->build_attrs(&attrs);
                 nvtxRangePushEx(&attrs);
             }
+#else
+            spdlog::warn("NVToolsExtensions are disabled - ScopedTracer doesn't work without.");
+#endif
         }
 
         ScopedTracer::~ScopedTracer() {
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
             if( _stream ) {
                 nvtx::g_nvtx_streams[_stream].front()->end();
                 nvtx::g_nvtx_streams[_stream].pop();
             } else {
                 nvtxRangePop();
             }
+#endif
         }
 
 #endif // RINGBUFFER_WITH_CUDA

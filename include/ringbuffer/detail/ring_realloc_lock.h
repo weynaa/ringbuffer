@@ -45,7 +45,10 @@
 #ifndef RINGBUFFER_RING_REALLOC_LOCK_H
 #define RINGBUFFER_RING_REALLOC_LOCK_H
 
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+
 #include "ringbuffer/common.h"
+#include "ringbuffer/visibility.h"
 #include "ringbuffer/types.h"
 #include "ringbuffer/detail/ring_state.h"
 
@@ -56,7 +59,7 @@ namespace ringbuffer {
 
     namespace state {
 
-        class RingReallocLock {
+        class RINGBUFFER_EXPORT RingReallocLock {
             unique_lock_type& m_lock;
             Ring* m_ring;
 

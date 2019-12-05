@@ -44,7 +44,10 @@
 #ifndef RINGBUFFER_CUDA_H
 #define RINGBUFFER_CUDA_H
 
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+
 #include "ringbuffer/common.h"
+#include "ringbuffer/visibility.h"
 #include <vector>
 #include <stdexcept>
 #include <map>
@@ -93,53 +96,53 @@ namespace ringbuffer {
         /*
          * get CUDA stream that is associated with this thread
          */
-        RBStatus streamGet(void*       stream);
+        RBStatus RINGBUFFER_EXPORT streamGet(void*       stream);
 
         /*
          * associate CUDA stream with this thread
          */
-        RBStatus streamSet(void const* stream);
+        RBStatus RINGBUFFER_EXPORT streamSet(void const* stream);
 
         /*
          * synchronize CUDA stream (blocking call)
          */
-        RBStatus streamSynchronize();
+        RBStatus RINGBUFFER_EXPORT streamSynchronize();
 
         /*
          * get CUDA Device
          */
-        RBStatus deviceGet(int* device);
+        RBStatus RINGBUFFER_EXPORT deviceGet(int* device);
 
         /*
          * set CUDA Device
          */
-        RBStatus deviceSet(int  device);
+        RBStatus RINGBUFFER_EXPORT deviceSet(int  device);
 
         /*
          * get number of CUDA Devices
          */
-        RBStatus deviceGetGPUCount(int*  count);
+        RBStatus RINGBUFFER_EXPORT deviceGetGPUCount(int*  count);
 
         /*
          * set CUDA Device by PCI Bus ID
          */
-        RBStatus deviceSetById(const std::string& pci_bus_id);
+        RBStatus RINGBUFFER_EXPORT deviceSetById(const std::string& pci_bus_id);
 
         /*
          * Set CUDA Device option to avoid yielding while setting the device (increases latency)
          * Note: This must be called _before_ initializing any devices in the current process
          */
-        RBStatus devicesSetNoSpinCPU();
+        RBStatus RINGBUFFER_EXPORT devicesSetNoSpinCPU();
 
         /*
          * Enable P2P Transfers between all supported GPUs
          */
-        RBStatus devicesEnableP2P();
+        RBStatus RINGBUFFER_EXPORT devicesEnableP2P();
 
         /*
          * Disable P2P Transfers between all supported GPUs
          */
-        RBStatus devicesDisableP2P();
+        RBStatus RINGBUFFER_EXPORT devicesDisableP2P();
 
         /*
          * Section blow is only enabled if ringbuffer is compiled with CUDA
@@ -154,8 +157,7 @@ namespace ringbuffer {
         /*
          * Helper class for JIT CUDA Kernels
          */
-
-        class CUDAKernel {
+        class RINGBUFFER_EXPORT CUDAKernel {
             CUmodule                  _module;
             CUfunction                _kernel;
             std::string               _func_name;
@@ -200,7 +202,7 @@ namespace ringbuffer {
                             unsigned int smem, CUstream stream,
                             std::vector<void*> arg_ptrs);
 
-#if __cplusplus >= 201103L
+#if RINGBUFFER_CXX_STANDARD >= 201103L
             template<typename... Args>
             inline CUresult launch(dim3 grid, dim3 block,
                                    unsigned int smem, CUstream stream,
@@ -215,13 +217,13 @@ namespace ringbuffer {
          * RAII Wrapper for CUDA Stream
          */
 
-        class stream {
+        class RINGBUFFER_EXPORT stream {
             void destroy();
         protected:
             cudaStream_t _obj;
         public:
             // Not copy-assignable
-#if __cplusplus >= 201103L
+#if RINGBUFFER_CXX_STANDARD >= 201103L
             stream(const cuda::stream& other) = delete;
             stream& operator=(const cuda::stream& other) = delete;
 
@@ -255,7 +257,7 @@ namespace ringbuffer {
 
 
         // This version automatically calls synchronize() before destruction
-        class scoped_stream : public cuda::stream {
+        class RINGBUFFER_EXPORT scoped_stream : public cuda::stream {
             typedef cuda::stream super_type;
         public:
             explicit scoped_stream(int priority=0, unsigned flags=cudaStreamNonBlocking);
@@ -263,7 +265,7 @@ namespace ringbuffer {
         };
 
         // This version automatically syncs with a parent stream on construct/destruct
-        class child_stream : public cuda::stream {
+        class RINGBUFFER_EXPORT child_stream : public cuda::stream {
             typedef cuda::stream super_type;
             cudaStream_t _parent;
             void sync_streams(cudaStream_t dependent, cudaStream_t dependee);
@@ -275,7 +277,7 @@ namespace ringbuffer {
         };
 
 #else // RINGBUFFER_WITH_CUDA
-        #define __host__
+    #define __host__
     #define __device__
 #endif // RINGBUFFER_WITH_CUDA
 

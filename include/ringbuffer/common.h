@@ -44,10 +44,13 @@
 #ifndef RINGFLOW_COMMON_H
 #define RINGFLOW_COMMON_H
 
+#pragma warning( disable : 4275 ) // non dll-interface class 'std::runtime_error' used as base for dll-interface class 'ringbuffer::RBException'
+
 #include <string>
 #include <stdexcept>
 #include "spdlog/spdlog.h"
 #include "ringbuffer/config.h"
+#include "ringbuffer/visibility.h"
 
 namespace ringbuffer {
 
@@ -80,9 +83,9 @@ namespace ringbuffer {
     };
 
 
-    std::string getStatusString(RBStatus status);
-    void requireSuccess(RBStatus status);
-    bool raiseOnFailure(RBStatus status);
+    std::string RINGBUFFER_EXPORT getStatusString(RBStatus status);
+    void RINGBUFFER_EXPORT requireSuccess(RBStatus status);
+    bool RINGBUFFER_EXPORT raiseOnFailure(RBStatus status);
 
 
     /*
@@ -97,20 +100,20 @@ namespace ringbuffer {
         SPACE_SHM          = 5  // shared memory allocation
     };
 
-    std::string getSpaceString(RBSpace space);
+    std::string RINGBUFFER_EXPORT getSpaceString(RBSpace space);
 
     /*
      * Helpers for checking if features are enabled
      */
-    bool getDebugEnabled();
-    RBStatus setDebugEnabled(bool enabled);
-    bool getCudaEnabled();
-    bool getShmEnabled();
+    bool RINGBUFFER_EXPORT getDebugEnabled();
+    RBStatus RINGBUFFER_EXPORT setDebugEnabled(bool enabled);
+    bool RINGBUFFER_EXPORT getCudaEnabled();
+    bool RINGBUFFER_EXPORT getShmEnabled();
 
     /*
      * Ringbuffer Exception Class
      */
-    class RBException : public std::runtime_error {
+    class RINGBUFFER_EXPORT RBException : public std::runtime_error {
         RBStatus _status;
     public:
         RBException(RBStatus stat, std::string msg = "")

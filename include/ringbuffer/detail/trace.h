@@ -51,19 +51,27 @@
 #include <string>
 #include <cstring>
 
-#ifdef RINGBUFFER_WITH_CUDA
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
 #include <nvToolsExt.h>
-#endif //RINGBUFFER_WITH_CUDA
+#endif //RINGBUFFER_WITH_NVTOOLSEXT
 
 namespace ringbuffer {
     namespace trace {
 #ifdef RINGBUFFER_TRACE
-        // Note: __PRETTY_FUNCTION__ is GCC-specific
+// Note: __PRETTY_FUNCTION__ is GCC-specific
 //       __FUNCSIG__ is the equivalent in MSVC
+// what about clang??
+#ifdef _WIN32
+#define RB_TRACE()                         ringbuffer::trace::ScopedTracer _rb_tracer(__FUNCSIG__)
+#define RB_TRACE_NAME(name)                ringbuffer::trace::ScopedTracer _rb_tracer(name)
+#define RB_TRACE_STREAM(stream)            ringbuffer::trace::ScopedTracer _rb_stream_tracer(__FUNCSIG__, stream)
+#define RB_TRACE_NAME_STREAM(name, stream) ringbuffer::trace::ScopedTracer _rb_stream_tracer(name, stream)
+#else
 #define RB_TRACE()                         ringbuffer::trace::ScopedTracer _rb_tracer(__PRETTY_FUNCTION__)
 #define RB_TRACE_NAME(name)                ringbuffer::trace::ScopedTracer _rb_tracer(name)
 #define RB_TRACE_STREAM(stream)            ringbuffer::trace::ScopedTracer _rb_stream_tracer(__PRETTY_FUNCTION__, stream)
 #define RB_TRACE_NAME_STREAM(name, stream) ringbuffer::trace::ScopedTracer _rb_stream_tracer(name, stream)
+#endif
 #else // not RINGBUFFER_TRACE
 #define RB_TRACE()
 #define RB_TRACE_NAME(name)
@@ -82,9 +90,11 @@ namespace ringbuffer {
 
             class AsyncTracer {
                 cudaStream_t          _stream;
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
                 nvtxRangeId_t         _id;
-                std::string           _msg;
                 nvtxEventAttributes_t _attrs;
+#endif
+                std::string           _msg;
                 static void range_start_callback(cudaStream_t stream, cudaError_t status, void* userData);
                 static void range_end_callback(cudaStream_t stream, cudaError_t status, void* userData);
             public:
@@ -93,9 +103,10 @@ namespace ringbuffer {
                 void end();
             };
 
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
             typedef std::map<cudaStream_t,std::queue<AsyncTracer*> > TracerStreamMap;
             extern thread_local TracerStreamMap g_nvtx_streams;
-
+#endif
         } // namespace nvtx
 
 #endif // RINGBUFFER_WITH_CUDA
@@ -106,7 +117,9 @@ namespace ringbuffer {
             uint32_t _category;
 #ifdef RINGBUFFER_WITH_CUDA
             cudaStream_t _stream;
+#ifdef RINGBUFFER_WITH_NVTOOLSEXT
             void build_attrs(nvtxEventAttributes_t *attrs);
+#endif
 #endif
         public:
             // Not copy-assignable

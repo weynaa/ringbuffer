@@ -77,17 +77,15 @@ namespace ringbuffer {
             }
         }
 
+		Guarantee::Guarantee(Guarantee&&) = default;
+		Guarantee& Guarantee::operator=(Guarantee&&) = default;
+
         void Guarantee::move_nolock(std::size_t offset) {
             this->destroy();
             this->create(offset);
         }
 
         std::size_t Guarantee::offset() const { return m_offset; }
-
-        std::unique_ptr<Guarantee> new_guarantee(const std::shared_ptr<Ring>& ring) {
-            // @todo: Use std::make_unique here (requires C++14)
-            return std::unique_ptr<Guarantee>(new Guarantee(ring));
-        }
 
     }
 }

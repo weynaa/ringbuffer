@@ -45,14 +45,17 @@
 #ifndef RINGBUFFER_SEQUENCE_H
 #define RINGBUFFER_SEQUENCE_H
 
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+
 #include "ringbuffer/common.h"
+#include "ringbuffer/visibility.h"
 #include "ringbuffer/types.h"
 
 namespace ringbuffer {
 
 
 
-    class Sequence {
+    class RINGBUFFER_EXPORT Sequence {
         friend class Ring;
         enum { RF_SEQUENCE_OPEN = (std::size_t)-1 };
         std::shared_ptr<Ring> m_ring;
@@ -74,6 +77,13 @@ namespace ringbuffer {
                  std::size_t   nringlet,
                  std::size_t   begin);
 
+		~Sequence();
+
+		Sequence(Sequence const&) = delete;
+		Sequence& operator=(Sequence const&) = delete;
+		Sequence(Sequence&&);
+		Sequence& operator=(Sequence&&);
+
 // not implemented in bifrost ??
 //        void finish(std::size_t offset_from_head=0);
 //        void close();
@@ -92,12 +102,19 @@ namespace ringbuffer {
     };
     
 
-    class SequenceWrapper {
+    class RINGBUFFER_EXPORT SequenceWrapper {
     protected:
         SequencePtr m_sequence;
     public:
         inline explicit SequenceWrapper(SequencePtr sequence) : m_sequence(sequence) {}
-        inline SequencePtr   sequence()    const { return m_sequence; }
+		~SequenceWrapper();
+
+		SequenceWrapper(SequenceWrapper const&) = delete;
+		SequenceWrapper& operator=(SequenceWrapper const&) = delete;
+		SequenceWrapper(SequenceWrapper&&);
+		SequenceWrapper& operator=(SequenceWrapper&&);
+
+		inline SequencePtr   sequence()    const { return m_sequence; }
         inline bool          is_finished() const { return m_sequence->is_finished(); }
         inline std::shared_ptr<Ring> ring() { return m_sequence->ring(); }
         inline std::string   name()        const { return m_sequence->name(); }
@@ -109,7 +126,7 @@ namespace ringbuffer {
     };
 
 
-    class ReadSequence : public SequenceWrapper {
+    class RINGBUFFER_EXPORT ReadSequence : public SequenceWrapper {
         std::unique_ptr<state::Guarantee> m_guarantee;
     public:
         // @todo: See if can make these function bodies a bit more concise
@@ -117,6 +134,12 @@ namespace ringbuffer {
         static ReadSequence by_name(const std::shared_ptr<Ring>& ring, const std::string& name, bool with_guarantee);
         static ReadSequence at(const std::shared_ptr<Ring>& ring, time_tag_type time_tag, bool with_guarantee);
         ReadSequence(SequencePtr sequence, std::unique_ptr<state::Guarantee>& guarantee);
+		~ReadSequence();
+
+		ReadSequence(ReadSequence const&) = delete;
+		ReadSequence& operator=(ReadSequence const&) = delete;
+		ReadSequence(ReadSequence&&);
+		ReadSequence& operator=(ReadSequence&&);
 
         void increment_to_next();
 
@@ -125,7 +148,7 @@ namespace ringbuffer {
     };
 
 
-    class WriteSequence : public SequenceWrapper {
+    class RINGBUFFER_EXPORT WriteSequence : public SequenceWrapper {
         std::size_t m_end_offset_from_head;
     public:
         WriteSequence(WriteSequence const& )            = delete;

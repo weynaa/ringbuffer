@@ -44,13 +44,16 @@
 #ifndef RINGBUFFER_SPAN_H
 #define RINGBUFFER_SPAN_H
 
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+
 #include "ringbuffer/common.h"
+#include "ringbuffer/visibility.h"
 #include "ringbuffer/types.h"
 
 
 namespace ringbuffer {
 
-    class Span {
+    class RINGBUFFER_EXPORT Span {
         std::shared_ptr<Ring> m_ring;
         std::size_t  m_size;
 
@@ -79,7 +82,7 @@ namespace ringbuffer {
     };
     
     
-    class WriteSpan : public Span {
+    class RINGBUFFER_EXPORT WriteSpan : public Span {
         std::size_t     m_begin;
         std::size_t     m_commit_size;
         void*           m_data;
@@ -104,7 +107,7 @@ namespace ringbuffer {
     };
     
     
-    class ReadSpan : public Span {
+    class RINGBUFFER_EXPORT ReadSpan : public Span {
         ReadSequence*   m_sequence;
         std::size_t     m_begin;
         void*           m_data;

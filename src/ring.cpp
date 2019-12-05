@@ -439,7 +439,7 @@ namespace ringbuffer {
         std::unique_ptr<state::Guarantee> scoped_guarantee;
         if( with_guarantee ) {
             // Ensure a guarantee is held while waiting for sequence to exist
-            scoped_guarantee = state::new_guarantee(shared_from_this());
+            scoped_guarantee = std::unique_ptr<state::Guarantee>(new state::Guarantee(shared_from_this()));
         }
         auto& state = get_state();
         state::unique_lock_type lock(state.mutex);
@@ -480,7 +480,7 @@ namespace ringbuffer {
         std::unique_ptr<state::Guarantee> scoped_guarantee;
         if( with_guarantee ) {
             // Ensure a guarantee is held while waiting for sequence to exist
-            scoped_guarantee = state::new_guarantee(shared_from_this());
+            scoped_guarantee = std::unique_ptr<state::Guarantee>(new state::Guarantee(shared_from_this()));
         }
         auto& state = get_state();
         state::unique_lock_type lock(state.mutex);
@@ -547,7 +547,7 @@ namespace ringbuffer {
         std::unique_ptr<state::Guarantee> scoped_guarantee;
         if( with_guarantee ) {
             // Ensure a guarantee is held while waiting for sequence to exist
-            scoped_guarantee = state::new_guarantee(shared_from_this());
+            scoped_guarantee = std::unique_ptr<state::Guarantee>(new state::Guarantee(shared_from_this()));
         }
         auto& state = get_state();
         state::unique_lock_type lock(state.mutex);

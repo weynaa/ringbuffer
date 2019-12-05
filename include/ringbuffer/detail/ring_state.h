@@ -44,7 +44,10 @@
 #ifndef RINGBUFFER_RING_STATE_H
 #define RINGBUFFER_RING_STATE_H
 
+#pragma warning( disable : 4251 ) // needs to have dll-interface to be used by clients of class
+
 #include "ringbuffer/common.h"
+#include "ringbuffer/visibility.h"
 #include "ringbuffer/types.h"
 
 #include <string>
@@ -59,7 +62,7 @@ namespace ringbuffer {
     namespace state {
         // RingState is factored out of the class to allow shm allocation later
 
-        struct RingState {
+        struct RINGBUFFER_EXPORT RingState {
             std::string name;
             RBSpace space{RBSpace ::SPACE_AUTO};
 

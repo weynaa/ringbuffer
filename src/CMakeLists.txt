@@ -4,6 +4,8 @@ configure_file(${PROJECT_SOURCE_DIR}/include/ringbuffer/config.h.in ${PROJECT_BI
 
 set(RINGBUFFER_HEADERS
         "${PROJECT_BINARY_DIR}/include/ringbuffer/config.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/visibility.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/types.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/common.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/memory.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/cuda.h"
@@ -51,17 +53,16 @@ target_include_directories(ringbuffer PUBLIC
         ${PROJECT_SOURCE_DIR}/src
         )
 
+if(NOT RINGBUFFER_BUILD_STATIC)
+    target_compile_definitions(ringbuffer PRIVATE "RINGBUFFER_EXPORTS")
+endif()
+
+
 if (RINGBUFFER_WITH_CUDA)
     set_target_properties(ringbuffer PROPERTIES CUDA_STANDARD 11)
     target_include_directories(ringbuffer PUBLIC ${CUDA_INCLUDE_DIRS})
     target_link_libraries(ringbuffer PUBLIC ${RINGBUFFER_CUDA_LIBRARIES})
 endif()
-
-# if (WIN32)
-#     target_link_libraries(ringbuffer_test
-#             CONAN_PKG::pthread-win32
-#             )    
-# endif()
 
 if (RINGBUFFER_WITH_OMP)
     target_link_libraries(ringbuffer PUBLIC OpenMP::OpenMP_CXX)
@@ -71,8 +72,6 @@ if (RINGBUFFER_WITH_NUMA)
     target_link_libraries(ringbuffer PUBLIC NUMA::NUMA)
 endif()
 
-if(WIN32)
-    target_link_libraries(ringbuffer PUBLIC CONAN_PKG::pthread-win32)
 
 install(TARGETS ringbuffer DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ringbuffer DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")

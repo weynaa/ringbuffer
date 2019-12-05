@@ -43,9 +43,15 @@
 
 #include "ringbuffer/detail/affinity.h"
 
+
+/*
+ * This part should use the hwloc library, maybe changing the interface to support logical cores and numa nodes
+*/
+#if defined __linux__ && __linux__
 #include <pthread.h>
 #include <unistd.h>
 //#include <sched.h>
+#endif
 #include <errno.h>
 
 #ifdef RINGBUFFER_WITH_OMP
@@ -87,14 +93,15 @@ namespace ringbuffer {
                 return RBStatus::STATUS_INVALID_ARGUMENT;
             }
 #else
-            #warning CPU core binding/affinity not supported on this OS
+            //#warning CPU core binding/affinity not supported on this OS
             return RBStatus::STATUS_UNSUPPORTED;
 #endif
         }
         
         
         RBStatus affinityGetCore(int* core) {
-            RB_ASSERT(core, RBStatus::STATUS_INVALID_POINTER);
+#if defined __linux__ && __linux__
+			RB_ASSERT(core, RBStatus::STATUS_INVALID_POINTER);
             pthread_t tid = pthread_self();
             cpu_set_t cpuset;
             RB_ASSERT(!pthread_getaffinity_np(tid, sizeof(cpu_set_t), &cpuset),
@@ -116,7 +123,11 @@ namespace ringbuffer {
             }
             // No cores are set! (Not sure if this is possible)
             return RBStatus::STATUS_INVALID_STATE;
-        }
+#else
+			//#warning CPU core binding / affinity not supported on this OS
+			return RBStatus::STATUS_UNSUPPORTED;
+#endif
+		}
 
         
         RBStatus affinitySetOpenMPCores(std::size_t nthread, const int* thread_cores) {
