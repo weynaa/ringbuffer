@@ -9,16 +9,16 @@ set(TEST_SOURCES
 
 add_executable(ringbuffer_test ${TEST_SOURCES})
 
-target_link_libraries(ringbuffer_test
+target_link_libraries(ringbuffer_test PUBLIC 
         ringbuffer
         ${RINGBUFFER_CUDA_LIBRARIES}
         )
 
 # conan weirdness ...
 if (TARGET CONAN_PKG::GTest)
-  target_link_libraries(ringbuffer_test CONAN_PKG::GTest)
+  target_link_libraries(ringbuffer_test PUBLIC CONAN_PKG::GTest)
 else()
-  target_link_libraries(ringbuffer_test CONAN_PKG::gtest)
+  target_link_libraries(ringbuffer_test PUBLIC CONAN_PKG::gtest)
 endif()
 
 if(ENABLE_FIBERS)
