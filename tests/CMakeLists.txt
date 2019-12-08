@@ -22,7 +22,7 @@ else()
 endif()
 
 if(ENABLE_FIBERS)
-    target_link_libraries(ringbuffer_test
+    target_link_libraries(ringbuffer_test PUBLIC
             CONAN_PKG::fiberpool
             )
     set_target_properties(ringbuffer_test PROPERTIES CXX_STANDARD 17)
