@@ -15,6 +15,7 @@ set(RINGBUFFER_HEADERS
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/ring_state.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/guarantee.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/util.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/signal.h"
 
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/ring.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/sequence.h"
