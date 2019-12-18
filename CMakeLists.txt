@@ -55,13 +55,13 @@ if (WITH_CUDA)
     SET(RINGBUFFER_CUDA_LIBRARIES
             ${CUDA_LIBRARIES}
             ${CUDA_CUDA_LIBRARY}
-            ${CUDA_NVTOOLSEXT_LIB}
+            ${CUDA_NVRTC_LIB}
             )
     if(WITH_NVTOOLSEXT)
     find_package(NVTOOLSEXT REQUIRED)
     SET(RINGBUFFER_CUDA_LIBRARIES
         ${RINGBUFFER_CUDA_LIBRARIES}
-        ${CUDA_NVRTC_LIB}
+        ${CUDA_NVTOOLSEXT_LIB}
         )        
     endif()
 endif()
