@@ -50,6 +50,7 @@
 #include "ringbuffer/visibility.h"
 #include "ringbuffer/types.h"
 #include "ringbuffer/detail/ring_state.h"
+#include "ringbuffer/detail/signal.h"
 
 #include <memory>
 
@@ -110,6 +111,8 @@ namespace ringbuffer {
         // private constructor to avoid creation of non-shared_ptr instances
         Ring(std::string name, RBSpace space);
 
+        detail::Signal<RBSequenceEvent> m_sequence_event;
+
     public:
 
         // No copy or move
@@ -166,6 +169,8 @@ namespace ringbuffer {
             return state.nringlet;
         }
 
+        std::vector<uint64_t> list_time_tags();
+
         SequencePtr begin_sequence(std::string   name,
                                    time_tag_type time_tag,
                                    std::size_t   header_size,
@@ -185,6 +190,9 @@ namespace ringbuffer {
                           std::size_t  begin,
                           std::size_t  size);
 
+
+        int subscribe_sequence_event(std::function<void(const RBSequenceEvent&)> const& slot);
+        void unsubscribe_sequence_event(int connection_id);
     };
 
 }

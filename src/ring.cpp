@@ -141,6 +141,7 @@ namespace ringbuffer {
         if( state.buf ) {
             memory::free_(state.buf, state.space);
         }
+        m_sequence_event.disconnect_all();
     }
     
     void Ring::resize(std::size_t contiguous_span,
@@ -280,6 +281,7 @@ namespace ringbuffer {
         state.writing_ended = true;
         state.eod = state.head;
         state.sequence_condition.notify_all();
+        m_sequence_event.emit(RBSequenceEvent::SEQUENCE_END_WRITING);
     }
 
     std::size_t Ring::_buf_offset(std::size_t offset) const {
@@ -390,6 +392,18 @@ namespace ringbuffer {
         return true;
     }
 
+    std::vector<uint64_t> Ring::list_time_tags() {
+        const auto& state = get_state();
+        state::lock_guard_type lock(state.mutex);
+        std::vector<uint64_t> time_tags;
+        for (auto& it : state.sequence_time_tag_map) {
+            if (it.second->is_finished()) {
+                time_tags.push_back(it.first);
+            }
+        }
+        return time_tags;
+    }
+
     SequencePtr Ring::begin_sequence(std::string   name,
                                      time_tag_type time_tag,
                                      std::size_t   header_size,
@@ -417,6 +431,7 @@ namespace ringbuffer {
         }
         state.sequence_queue.push(sequence);
         state.sequence_condition.notify_all();
+        m_sequence_event.emit(RBSequenceEvent::SEQUENCE_BEGIN_WRITING);
         if( !std::string(name).empty() ) {
             state.sequence_map.insert(std::make_pair(std::string(name),sequence));
         }
@@ -737,6 +752,15 @@ namespace ringbuffer {
         state.read_condition.notify_all();
         --state.nwrite_open;
         state.realloc_condition.notify_all();
+    }
+
+
+    int Ring::subscribe_sequence_event(std::function<void(const RBSequenceEvent&)> const& slot) {
+        return m_sequence_event.connect(slot);
+    }
+
+    void Ring::unsubscribe_sequence_event(int connection_id) {
+        m_sequence_event.disconnect(connection_id);
     }
 
 

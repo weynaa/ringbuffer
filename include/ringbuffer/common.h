@@ -102,6 +102,16 @@ namespace ringbuffer {
 
     std::string RINGBUFFER_EXPORT getSpaceString(RBSpace space);
 
+
+    /*
+     * Enum for sequence change signals
+     */
+
+    enum class RBSequenceEvent {
+        SEQUENCE_BEGIN_WRITING = 0,
+        SEQUENCE_END_WRITING
+    };
+
     /*
      * Helpers for checking if features are enabled
      */
