@@ -133,6 +133,9 @@ namespace ringbuffer {
         static ReadSequence earliest_or_latest(const std::shared_ptr<Ring>& ring, bool with_guarantee, bool latest);
         static ReadSequence by_name(const std::shared_ptr<Ring>& ring, const std::string& name, bool with_guarantee);
         static ReadSequence at(const std::shared_ptr<Ring>& ring, time_tag_type time_tag, bool with_guarantee);
+        static std::unique_ptr<ReadSequence> earliest_or_latest_ptr(const std::shared_ptr<Ring>& ring, bool with_guarantee, bool latest);
+        static std::unique_ptr<ReadSequence> by_name_ptr(const std::shared_ptr<Ring>& ring, const std::string& name, bool with_guarantee);
+        static std::unique_ptr<ReadSequence> at_ptr(const std::shared_ptr<Ring>& ring, time_tag_type time_tag, bool with_guarantee);
         ReadSequence(SequencePtr sequence, std::unique_ptr<state::Guarantee>& guarantee);
 		~ReadSequence();
 

@@ -94,6 +94,24 @@ namespace ringbuffer {
         return std::move(ReadSequence(sequence, guarantee));
     }
 
+    std::unique_ptr<ReadSequence> ReadSequence::earliest_or_latest_ptr(const std::shared_ptr<Ring>& ring, bool with_guarantee, bool latest) {
+        std::unique_ptr<state::Guarantee> guarantee;
+        SequencePtr sequence = ring->open_earliest_or_latest_sequence(with_guarantee, guarantee, latest);
+        return std::unique_ptr<ReadSequence>(new ReadSequence(sequence, guarantee));
+    }
+
+    std::unique_ptr<ReadSequence> ReadSequence::by_name_ptr(const std::shared_ptr<Ring>& ring, const std::string& name, bool with_guarantee) {
+        std::unique_ptr<state::Guarantee> guarantee;
+        SequencePtr sequence = ring->open_sequence_by_name(name, with_guarantee, guarantee);
+        return std::unique_ptr<ReadSequence>(new ReadSequence(sequence, guarantee));
+    }
+
+    std::unique_ptr<ReadSequence> ReadSequence::at_ptr(const std::shared_ptr<Ring>& ring, time_tag_type time_tag, bool with_guarantee) {
+        std::unique_ptr<state::Guarantee> guarantee;
+        SequencePtr sequence = ring->open_sequence_at(time_tag, with_guarantee, guarantee);
+        return std::unique_ptr<ReadSequence>(new ReadSequence(sequence, guarantee));
+    }
+
     ReadSequence::ReadSequence(SequencePtr sequence, std::unique_ptr<state::Guarantee>& guarantee)
             : SequenceWrapper(sequence), m_guarantee(std::move(guarantee)) {}
 
