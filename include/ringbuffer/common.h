@@ -104,15 +104,6 @@ namespace ringbuffer {
 
 
     /*
-     * Enum for sequence change signals
-     */
-
-    enum class RBSequenceEvent {
-        SEQUENCE_BEGIN_WRITING = 0,
-        SEQUENCE_END_WRITING
-    };
-
-    /*
      * Helpers for checking if features are enabled
      */
     bool RINGBUFFER_EXPORT getDebugEnabled();

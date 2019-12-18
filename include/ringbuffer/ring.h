@@ -111,7 +111,7 @@ namespace ringbuffer {
         // private constructor to avoid creation of non-shared_ptr instances
         Ring(std::string name, RBSpace space);
 
-        detail::Signal<RBSequenceEvent> m_sequence_event;
+        detail::Signal<time_tag_type> m_sequence_event;
 
     public:
 
@@ -191,7 +191,7 @@ namespace ringbuffer {
                           std::size_t  size);
 
 
-        int subscribe_sequence_event(std::function<void(const RBSequenceEvent&)> const& slot);
+        int subscribe_sequence_event(std::function<void(time_tag_type)> const& slot);
         void unsubscribe_sequence_event(int connection_id);
     };
 

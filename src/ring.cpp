@@ -281,7 +281,6 @@ namespace ringbuffer {
         state.writing_ended = true;
         state.eod = state.head;
         state.sequence_condition.notify_all();
-        m_sequence_event.emit(RBSequenceEvent::SEQUENCE_END_WRITING);
     }
 
     std::size_t Ring::_buf_offset(std::size_t offset) const {
@@ -431,7 +430,7 @@ namespace ringbuffer {
         }
         state.sequence_queue.push(sequence);
         state.sequence_condition.notify_all();
-        m_sequence_event.emit(RBSequenceEvent::SEQUENCE_BEGIN_WRITING);
+        m_sequence_event.emit(time_tag);
         if( !std::string(name).empty() ) {
             state.sequence_map.insert(std::make_pair(std::string(name),sequence));
         }
@@ -755,7 +754,7 @@ namespace ringbuffer {
     }
 
 
-    int Ring::subscribe_sequence_event(std::function<void(const RBSequenceEvent&)> const& slot) {
+    int Ring::subscribe_sequence_event(std::function<void(time_tag_type)> const& slot) {
         return m_sequence_event.connect(slot);
     }
 
