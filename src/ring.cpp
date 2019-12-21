@@ -430,13 +430,13 @@ namespace ringbuffer {
         }
         state.sequence_queue.push(sequence);
         state.sequence_condition.notify_all();
-        m_sequence_event.emit(time_tag);
         if( !std::string(name).empty() ) {
             state.sequence_map.insert(std::make_pair(std::string(name),sequence));
         }
         if( time_tag != std::size_t(-1) ) {
             state.sequence_time_tag_map.insert(std::make_pair(time_tag,sequence));
         }
+        m_sequence_event.emit(time_tag);
         return sequence;
     }
 
