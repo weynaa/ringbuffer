@@ -22,6 +22,7 @@ class RingbufferConan(ConanFile):
         "with_cuda": [True, False],
         "with_omp": [True, False],
         "with_numa": [True, False],
+        "with_nvtoolsext": [True, False],
         "enable_fibers": [True, False],
         "enable_debug": [True, False],
         "enable_trace": [True, False],
@@ -38,6 +39,7 @@ class RingbufferConan(ConanFile):
         "with_cuda": False,
         "with_omp": False,
         "with_numa": False,
+        "with_nvtoolsext": False,
         "enable_fibers": False,
         "enable_debug": False,
         "enable_trace": False,
@@ -53,9 +55,6 @@ class RingbufferConan(ConanFile):
         if self.options.enable_fibers:
             self.requires("fiberpool/0.1@camposs/stable")
 
-        # this should be migrated to hwloc
-        # if self.settings.os == "Windows":
-        #     self.requires("pthread-win32/2.9.1@camposs/stable")
 
     def system_requirements(self):
         if tools.os_info.is_linux:
