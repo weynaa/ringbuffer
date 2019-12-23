@@ -44,6 +44,7 @@
 #ifndef RINGBUFFER_TRACE_H
 #define RINGBUFFER_TRACE_H
 
+#include "ringbuffer/config.h"
 #include "ringbuffer/detail/cuda.h"
 
 #include <map>
