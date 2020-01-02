@@ -754,13 +754,4 @@ namespace ringbuffer {
     }
 
 
-    int Ring::subscribe_sequence_event(std::function<void(time_tag_type)> const& slot) {
-        return m_sequence_event.connect(slot);
-    }
-
-    void Ring::unsubscribe_sequence_event(int connection_id) {
-        m_sequence_event.disconnect(connection_id);
-    }
-
-
 }

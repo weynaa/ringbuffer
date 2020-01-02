@@ -191,8 +191,13 @@ namespace ringbuffer {
                           std::size_t  size);
 
 
-        int subscribe_sequence_event(std::function<void(time_tag_type)> const& slot);
-        void unsubscribe_sequence_event(int connection_id);
+        int subscribe_sequence_event(std::function<void(time_tag_type)> const& slot) {
+            return m_sequence_event.connect(slot);
+        }
+
+        void unsubscribe_sequence_event(int connection_id) {
+            m_sequence_event.disconnect(connection_id);
+        }
     };
 
 }
