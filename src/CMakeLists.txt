@@ -74,6 +74,18 @@ if (RINGBUFFER_WITH_NUMA)
 endif()
 
 
-install(TARGETS ringbuffer DESTINATION ${CMAKE_INSTALL_LIBDIR})
+install(TARGETS ringbuffer EXPORT ringbufferConfig
+    ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME  DESTINATION ${CMAKE_INSTALL_BINDIR})  # This is for Windows
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ringbuffer DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} FILES_MATCHING PATTERN "*.h")
 install(FILES ${PROJECT_BINARY_DIR}/include/ringbuffer/config.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ringbuffer)
+
+# This makes the project importable from the install directory
+# Put config file in per-project dir (name MUST match), can also
+# just go into 'cmake'.
+install(EXPORT ringbufferConfig DESTINATION share/ringbuffer/cmake)
+
+# This makes the project importable from the build directory
+export(TARGETS ringbuffer FILE ringbufferConfig.cmake)
+
