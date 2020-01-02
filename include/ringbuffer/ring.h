@@ -191,14 +191,22 @@ namespace ringbuffer {
                           std::size_t  size);
 
 
-        int subscribe_sequence_event(std::function<void(time_tag_type)> const& slot) {
-            return m_sequence_event.connect(slot);
-        }
 
-        void unsubscribe_sequence_event(int connection_id) {
-            m_sequence_event.disconnect(connection_id);
-        }
+		int subscribe_sequence_event(void(*callback)(time_tag_type, void*), void* const userData=nullptr);
+
+		template<class Callback, class T> int subscribe_sequence_event(Callback callback, T& userData);
+
+		void unsubscribe_sequence_event(int connection_id);
     };
+
+	template<class Callback, class T> int Ring::subscribe_sequence_event(Callback callback, T& userData) {
+		/* Don't try to wrap a null function pointer. Need to cast first because
+		   MSVC (even 2017) can't apply ! to a lambda. Ugh. */
+		const auto callbackPtr = static_cast<void(*)(time_tag_type, void*)>(callback);
+		if (!callbackPtr) return -1;
+
+		return subscribe_sequence_event(callbackPtr, static_cast<const void*>(&userData));
+	}
 
 }
 

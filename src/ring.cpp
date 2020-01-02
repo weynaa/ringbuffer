@@ -754,4 +754,15 @@ namespace ringbuffer {
     }
 
 
+	int Ring::subscribe_sequence_event(void(*callback)(time_tag_type, void*), void* const userData) {
+		return m_sequence_event.connect([callback, userData](time_tag_type ts) {
+			callback(ts, const_cast<void*>(userData));
+		});
+	}
+
+	void Ring::unsubscribe_sequence_event(int connection_id) {
+		m_sequence_event.disconnect(connection_id);
+	}
+
+
 }
