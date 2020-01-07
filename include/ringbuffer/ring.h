@@ -205,7 +205,7 @@ namespace ringbuffer {
 		const auto callbackPtr = static_cast<void(*)(time_tag_type, void*)>(callback);
 		if (!callbackPtr) return -1;
 
-		return subscribe_sequence_event(callbackPtr, static_cast<const void*>(&userData));
+		return subscribe_sequence_event(callbackPtr, static_cast<void* const>(&userData));
 	}
 
 }
