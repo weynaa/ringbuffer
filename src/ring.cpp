@@ -436,7 +436,7 @@ namespace ringbuffer {
         if( time_tag != std::size_t(-1) ) {
             state.sequence_time_tag_map.insert(std::make_pair(time_tag,sequence));
         }
-        m_sequence_event.emit(time_tag);
+//        m_sequence_event.emit(time_tag);
         return sequence;
     }
 
@@ -605,6 +605,7 @@ namespace ringbuffer {
         // This marks the sequence as finished
         sequence->m_end = state.head + offset_from_head;
         state.read_condition.notify_all();
+        m_sequence_event.emit(sequence->time_tag());
     }
 
     void Ring::acquire_span(ReadSequence* rsequence,
