@@ -39,6 +39,7 @@ namespace ringbuffer {
     typedef uint8_t*             pointer;
     typedef uint8_t const*       const_pointer;
     typedef std::vector<char>    header_type;
+    typedef std::vector<char>    footer_type;
     typedef unsigned long long   time_tag_type;
     typedef   signed long long   delta_type;
 

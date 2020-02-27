@@ -65,6 +65,7 @@ namespace ringbuffer {
         std::size_t    m_begin;
         std::size_t    m_end;
         header_type    m_header;
+        footer_type    m_footer;
         SequencePtr    m_next;
         std::size_t    m_readrefcount; // ever used ??
 
@@ -84,9 +85,7 @@ namespace ringbuffer {
 		Sequence(Sequence&&);
 		Sequence& operator=(Sequence&&);
 
-// not implemented in bifrost ??
-//        void finish(std::size_t offset_from_head=0);
-//        void close();
+        void set_footer(std::size_t footer_size, void* footer);
 
         void set_next(SequencePtr next);
 
@@ -96,6 +95,8 @@ namespace ringbuffer {
         inline time_tag_type time_tag()    const { return m_time_tag; }
         inline const void*   header()      const { return m_header.size() ? &m_header[0] : nullptr; }
         inline std::size_t   header_size() const { return m_header.size(); }
+        inline const void*   footer()      const { return m_footer.size() ? &m_footer[0] : nullptr; }
+        inline std::size_t   footer_size() const { return m_footer.size(); }
         inline std::size_t   nringlet()    const { return m_nringlet; }
         inline std::size_t   begin()       const { return m_begin; }
         inline std::size_t   end()         const { return m_end; }
@@ -121,6 +122,8 @@ namespace ringbuffer {
         inline time_tag_type time_tag()    const { return m_sequence->time_tag(); }
         inline const void*   header()      const { return m_sequence->header(); }
         inline std::size_t   header_size() const { return m_sequence->header_size(); }
+        inline const void*   footer()      const { return m_sequence->footer(); }
+        inline std::size_t   footer_size() const { return m_sequence->footer_size(); }
         inline std::size_t   nringlet()    const { return m_sequence->nringlet(); }
         inline std::size_t   begin()       const { return m_sequence->begin(); }
     };
@@ -165,6 +168,8 @@ namespace ringbuffer {
                       std::size_t offset_from_head=0);
 
         ~WriteSequence();
+
+        void finish(std::size_t footer_size=0, void* footer=nullptr);
 
         void set_end_offset_from_head(std::size_t end_offset_from_head);
     };

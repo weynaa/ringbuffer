@@ -594,8 +594,12 @@ namespace ringbuffer {
         guarantee = std::move(scoped_guarantee);
     }
 
+    void finish();
+
+
     void Ring::finish_sequence(SequencePtr sequence,
-                               std::size_t offset_from_head) {
+                               std::size_t offset_from_head,
+                               std::size_t footer_size, void* footer) {
         auto& state = get_state();
         state::lock_guard_type lock(state.mutex);
         // Must have the sequence still open
@@ -603,6 +607,9 @@ namespace ringbuffer {
                             !state.sequence_queue.back()->is_finished(),
                             RBStatus::STATUS_INVALID_STATE);
         // This marks the sequence as finished
+        if (footer_size > 0) {
+            sequence->set_footer(footer_size, footer);
+        }
         sequence->m_end = state.head + offset_from_head;
         state.read_condition.notify_all();
         m_sequence_event.emit(sequence->time_tag());

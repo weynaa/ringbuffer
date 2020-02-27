@@ -70,6 +70,10 @@ namespace ringbuffer {
         m_next = std::move(next);
     }
 
+    void Sequence::set_footer(std::size_t footer_size, void* footer) {
+        m_footer = footer_type((const char*)footer, (const char*)footer+footer_size);
+    }
+
 	SequenceWrapper::~SequenceWrapper() = default;
 	SequenceWrapper::SequenceWrapper(SequenceWrapper&&) = default;
 	SequenceWrapper& SequenceWrapper::operator=(SequenceWrapper&&) = default;
@@ -138,8 +142,15 @@ namespace ringbuffer {
               m_end_offset_from_head(0) {}
 
 
+    void WriteSequence::finish(std::size_t footer_size, void* footer) {
+        this->ring()->finish_sequence(m_sequence, m_end_offset_from_head, footer_size, footer);
+
+    }
+
     WriteSequence::~WriteSequence() {
-        this->ring()->finish_sequence(m_sequence, m_end_offset_from_head);
+        if (!m_sequence->is_finished()) {
+            finish();
+        }
     }
 
 	void WriteSequence::set_end_offset_from_head(std::size_t end_offset_from_head) {

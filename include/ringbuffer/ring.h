@@ -101,7 +101,7 @@ namespace ringbuffer {
         SequencePtr open_sequence_at(time_tag_type time_tag,
                                          bool with_guarantee,
                                          std::unique_ptr<state::Guarantee>& guarantee);
-        void finish_sequence(SequencePtr sequence, std::size_t offset_from_head);
+        void finish_sequence(SequencePtr sequence, std::size_t offset_from_head, std::size_t footer_size=0, void* footer=nullptr);
 
 
         state::RingState& get_state();
