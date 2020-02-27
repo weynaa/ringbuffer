@@ -7,7 +7,7 @@ from io import StringIO
 
 class RingbufferConan(ConanFile):
     name = "ringbuffer"
-    version = "0.1.0"
+    version = "0.1.1"
 
     description = "Ringbuffer Library"
     url = "https://github.com/TUM-CAMP-NARVIS/ringbuffer"
