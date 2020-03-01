@@ -73,15 +73,17 @@ TEST(RingbufferTestSuite, RingClass) {
 //generate some dummy variables
     std::size_t skip_time_tag = -1;
     std::size_t skip_offset = 0;
-    std::size_t my_header_size = 0;
-    const char *my_header = "";
 
 
 //create the data
     float data[8] = {10, -10, 0, 0, 1, -3, 1, 0};
 
+    int8_t header_data[7] = {1, 10, -10, 0, 1, -3, 0};
+    int8_t footer_data[6] = {0, 1, -3, 1, 10, -10};
+
     EXPECT_EQ(sizeof(data), nbytes);
 
+    //we can find our sequence by this name later on
     std::string seq_name = "mysequence";
 
 // Writing to the buffer
@@ -89,25 +91,30 @@ TEST(RingbufferTestSuite, RingClass) {
         ring->begin_writing();
         {
 
-            //we can find our sequence by this name later on
             bool nonblocking = true;
 
 //open a sequence on the ring->
-            WriteSequence write_seq(ring, seq_name, skip_time_tag, my_header_size, my_header, nringlets, skip_offset);
+            WriteSequence write_seq(ring, seq_name, skip_time_tag, sizeof(header_data), &header_data[0], nringlets, skip_offset);
             EXPECT_EQ(write_seq.nringlet(), nringlets);
 
+            // wrapped in brackets due to the need for the span instance to deconstruct in order to commit the span to the sequence
+            {
 //reserve a "span" on this sequence to put our data
 //point our pointer to the span's allocated memory
-            WriteSpan write_span(ring, nbytes, nonblocking);
+                WriteSpan write_span(ring, nbytes, nonblocking);
 
 //create a pointer to pass our data to
-            void *data_access = write_span.data();
+                void *data_access = write_span.data();
 
 // copy the data to the ring
-            memcpy(data_access, &data, nbytes);
+                memcpy(data_access, &data, nbytes);
 
 //commit this span to memory
-            write_span.commit(nbytes);
+                write_span.commit(nbytes);
+            }
+
+// finish sequence and set footer data
+            write_seq.finish(sizeof(footer_data), &footer_data[0]);
 
         }
         ring->end_writing();
@@ -117,7 +124,22 @@ TEST(RingbufferTestSuite, RingClass) {
 
     {
         auto read_seq = ReadSequence::by_name(ring, seq_name, true);
+// Access the header
+        auto* header = reinterpret_cast<const int8_t*>(read_seq.header());
+        EXPECT_EQ(read_seq.header_size(), sizeof(header_data));
+        for (int i=0; i < sizeof(header_data); i++) {
+            EXPECT_EQ(header[i], header_data[i]);
+        }
+
         ReadSpan read_span(&read_seq, skip_offset, nbytes);
+
+// Access the footer
+        auto* footer = reinterpret_cast<const int8_t*>(read_seq.footer());
+        EXPECT_EQ(read_seq.footer_size(), sizeof(footer_data));
+        for (int i=0; i < sizeof(footer_data); i++) {
+            EXPECT_EQ(footer[i], footer_data[i]);
+        }
+
 
 //Access the data from the span with a pointer
         void *data_read = read_span.data();
