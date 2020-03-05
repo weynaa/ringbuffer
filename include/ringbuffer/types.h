@@ -7,6 +7,7 @@
 
 #include <memory>
 #include <map>
+#include <vector>
 #include <mutex>
 #include <condition_variable>
 
