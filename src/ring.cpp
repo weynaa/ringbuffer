@@ -607,10 +607,10 @@ namespace ringbuffer {
             RB_ASSERT_EXCEPTION(!state.sequence_queue.empty() &&
                                 !state.sequence_queue.back()->is_finished(),
                                 RBStatus::STATUS_INVALID_STATE);
-            // This marks the sequence as finished
             if (footer_size > 0) {
                 sequence->set_footer(footer_size, footer);
             }
+            // This marks the sequence as finished
             sequence->m_end = state.head + offset_from_head;
             state.read_condition.notify_all();
         }
