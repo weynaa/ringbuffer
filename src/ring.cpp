@@ -412,29 +412,32 @@ namespace ringbuffer {
 //        RB_ASSERT_EXCEPTION(name.c_str(),           RBStatus::STATUS_INVALID_ARGUMENT); // not nice .. maybe does not work as intended..
         RB_ASSERT_EXCEPTION(header || !header_size, RBStatus::STATUS_INVALID_ARGUMENT);
         auto& state = get_state();
-        state::lock_guard_type lock(state.mutex);
-        //unique_lock_type lock(_mutex);
-        RB_ASSERT_EXCEPTION(nringlet <= state.nringlet,  RBStatus::STATUS_INVALID_ARGUMENT); // this assumes that providing nringlet==0 results in 1 ringlet ??
-        // Cannot have the previous sequence still open
-        RB_ASSERT_EXCEPTION(state.sequence_queue.empty() ||
-                                  state.sequence_queue.back()->is_finished(),
-                            RBStatus::STATUS_INVALID_STATE);
-        std::size_t seq_begin = state.head + offset_from_head;
-        // Cannot have existing sequence with same name
-        RB_ASSERT_EXCEPTION(state.sequence_map.count(name)==0,              RBStatus::STATUS_INVALID_ARGUMENT);
-        RB_ASSERT_EXCEPTION(state.sequence_time_tag_map.count(time_tag)==0, RBStatus::STATUS_INVALID_ARGUMENT);
-        SequencePtr sequence(new Sequence(shared_from_this(), name, time_tag, header_size,
-                                                   header, nringlet, seq_begin));
-        if( state.sequence_queue.size() ) {
-            state.sequence_queue.back()->set_next(sequence);
-        }
-        state.sequence_queue.push(sequence);
-        state.sequence_condition.notify_all();
-        if( !std::string(name).empty() ) {
-            state.sequence_map.insert(std::make_pair(std::string(name),sequence));
-        }
-        if( time_tag != std::size_t(-1) ) {
-            state.sequence_time_tag_map.insert(std::make_pair(time_tag,sequence));
+        SequencePtr sequence;
+        {
+            state::lock_guard_type lock(state.mutex);
+            //unique_lock_type lock(_mutex);
+            RB_ASSERT_EXCEPTION(nringlet <= state.nringlet,  RBStatus::STATUS_INVALID_ARGUMENT); // this assumes that providing nringlet==0 results in 1 ringlet ??
+            // Cannot have the previous sequence still open
+            RB_ASSERT_EXCEPTION(state.sequence_queue.empty() ||
+                                state.sequence_queue.back()->is_finished(),
+                                RBStatus::STATUS_INVALID_STATE);
+            std::size_t seq_begin = state.head + offset_from_head;
+            // Cannot have existing sequence with same name
+            RB_ASSERT_EXCEPTION(state.sequence_map.count(name)==0,              RBStatus::STATUS_INVALID_ARGUMENT);
+            RB_ASSERT_EXCEPTION(state.sequence_time_tag_map.count(time_tag)==0, RBStatus::STATUS_INVALID_ARGUMENT);
+            sequence.reset(new Sequence(shared_from_this(), name, time_tag, header_size,
+                                        header, nringlet, seq_begin));
+            if( state.sequence_queue.size() ) {
+                state.sequence_queue.back()->set_next(sequence);
+            }
+            state.sequence_queue.push(sequence);
+            state.sequence_condition.notify_all();
+            if( !std::string(name).empty() ) {
+                state.sequence_map.insert(std::make_pair(std::string(name),sequence));
+            }
+            if( time_tag != std::size_t(-1) ) {
+                state.sequence_time_tag_map.insert(std::make_pair(time_tag,sequence));
+            }
         }
 //        m_sequence_event.emit(time_tag);
         return sequence;
