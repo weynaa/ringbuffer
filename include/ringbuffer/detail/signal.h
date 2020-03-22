@@ -53,8 +53,8 @@ namespace ringbuffer {
 
         // A signal object may call multiple slots with the
         // same signature. You can connect functions to the signal
-        // which will be called when the emit() method on the
-        // signal object is invoked. Any argument passed to emit()
+        // which will be called when the dispatch() method on the
+        // signal object is invoked. Any argument passed to dispatch()
         // will be passed to the given functions.
 
         template <typename... Args>
@@ -101,7 +101,7 @@ namespace ringbuffer {
             }
 
             // calls all connected functions
-            void emit(Args... p) {
+            void dispatch(Args... p) {
                 for(auto it : slots_) {
                     it.second(p...);
                 }

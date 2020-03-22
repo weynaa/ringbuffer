@@ -439,7 +439,7 @@ namespace ringbuffer {
                 state.sequence_time_tag_map.insert(std::make_pair(time_tag,sequence));
             }
         }
-//        m_sequence_event.emit(time_tag);
+//        m_sequence_event.dispatch(time_tag);
         return sequence;
     }
 
@@ -617,7 +617,7 @@ namespace ringbuffer {
             sequence->m_end = state.head + offset_from_head;
             state.read_condition.notify_all();
         }
-        m_sequence_event.emit(sequence->time_tag());
+        m_sequence_event.dispatch(sequence->time_tag());
     }
 
     void Ring::acquire_span(ReadSequence* rsequence,
