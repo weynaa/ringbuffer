@@ -148,7 +148,7 @@ namespace ringbuffer {
                 nvtxRangePushEx(&attrs);
             }
 #else
-            spdlog::warn("NVToolsExtensions are disabled - ScopedTracer doesn't work without.");
+            spdlog::trace("NVToolsExtensions are disabled - ScopedTracer doesn't work without.");
 #endif
         }
 
