@@ -7,6 +7,7 @@ set(RINGBUFFER_HEADERS
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/visibility.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/types.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/common.h"
+        "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/debug_trap.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/memory.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/cuda.h"
         "${PROJECT_SOURCE_DIR}/include/ringbuffer/detail/trace.h"

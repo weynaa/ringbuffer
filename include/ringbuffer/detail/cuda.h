@@ -59,6 +59,8 @@
 #include <cuda.h>
 #endif // RINGBUFFER_WITH_CUDA
 
+#include "ringbuffer/detail/debug_trap.h"
+
 namespace ringbuffer {
     namespace cuda {
 
@@ -78,6 +80,7 @@ namespace ringbuffer {
 		cudaError_t cuda_ret = call; \
 		if( cuda_ret != cudaSuccess ) { \
 			RB_DEBUG_PRINT(cudaGetErrorString(cuda_ret)); \
+			ringbuffer_dbg_assert(false); \
 		} \
 		RB_ASSERT_EXCEPTION(cuda_ret == cudaSuccess, err); \
 	} while(0)
@@ -87,6 +90,7 @@ namespace ringbuffer {
 		cudaError_t cuda_ret = call; \
 		if( cuda_ret != cudaSuccess ) { \
 			RB_DEBUG_PRINT(cudaGetErrorString(cuda_ret)); \
+			ringbuffer_dbg_assert(false); \
 		} \
 		RB_ASSERT(cuda_ret == cudaSuccess, err); \
 	} while(0)
